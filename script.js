@@ -251,7 +251,7 @@ $('#btnQRIS')?.addEventListener('click', ()=>{
     html: `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div>
-          <img src="assets/qris.jpg" alt="QRIS" style="width:100%;border-radius:12px;border:1px dashed #d5dbff;padding:6px;background:#fafbff" />
+          <img src="assets/qris.png" alt="QRIS" style="width:100%;border-radius:12px;border:1px dashed #d5dbff;padding:6px;background:#fafbff" />
           <div class="muted" style="margin-top:6px">Scan QR lalu isi nominal & keterangan.</div>
         </div>
         <div>
