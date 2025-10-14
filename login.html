@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Masuk | Kas Kelas</title>
+  <link rel="icon" href="assets/logo.png">
+  <style>
+    *{box-sizing:border-box;font-family:'Poppins',sans-serif}
+    body{
+      margin:0;min-height:100vh;display:flex;justify-content:center;align-items:center;
+      background:linear-gradient(120deg,#e8f0ff 0%,#f7f9ff 40%,#ffffff 100%);
+    }
+    .container{
+      background:rgba(255,255,255,0.85);
+      backdrop-filter:blur(10px);
+      padding:40px;
+      border-radius:20px;
+      box-shadow:0 20px 40px rgba(0,0,0,0.1);
+      width:360px;animation:fadeIn .6s ease;
+    }
+    h2{text-align:center;color:#0d6efd;margin-bottom:10px}
+    .tabs{display:flex;justify-content:center;margin-bottom:15px;}
+    .tabs button{
+      border:none;background:#f0f4ff;padding:8px 16px;margin:0 4px;border-radius:10px;
+      cursor:pointer;font-weight:600;color:#0d6efd;transition:0.3s;
+    }
+    .tabs button.active{background:#0d6efd;color:#fff;}
+    .input-group{margin-bottom:15px;}
+    label{display:block;margin-bottom:5px;color:#333;font-size:14px;}
+    input{
+      width:100%;padding:10px;border:1px solid #ccc;border-radius:10px;outline:none;
+    }
+    button.login-btn{
+      width:100%;padding:10px;margin-top:5px;border:none;border-radius:10px;
+      background:#0d6efd;color:#fff;font-weight:600;cursor:pointer;transition:0.3s;
+    }
+    button.login-btn:hover{background:#0b5ed7;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Kas Kelas</h2>
+
+    <div class="tabs">
+      <button id="tabLogin" class="active">Login</button>
+      <button id="tabSignup">Daftar</button>
+    </div>
+
+    <div id="loginForm">
+      <div class="input-group">
+        <label>Username</label>
+        <input type="text" id="loginUser" placeholder="Masukkan username">
+      </div>
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="loginPass" placeholder="Masukkan password">
+      </div>
+      <button class="login-btn" id="btnLogin">Masuk</button>
+    </div>
+
+    <div id="signupForm" style="display:none;">
+      <div class="input-group">
+        <label>Username</label>
+        <input type="text" id="regUser" placeholder="Masukkan username baru">
+      </div>
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="regPass" placeholder="Masukkan password baru">
+      </div>
+      <button class="login-btn" id="btnSignup">Daftar</button>
+    </div>
+  </div>
+
+  <script type="module" src="login.js"></script>
+</body>
+</html>
