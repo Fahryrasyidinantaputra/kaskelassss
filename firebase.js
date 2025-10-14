@@ -1,7 +1,7 @@
-// KONEKSI FIREBASE (pastikan project kamu benar)
+// KONEKSI FIREBASE (Realtime Database)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { 
-  getDatabase, ref, set, push, onValue, update, remove 
+import {
+  getDatabase, ref, set, push, onValue, update, remove
 } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js";
 
 const firebaseConfig = {
@@ -15,6 +15,6 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+const db  = getDatabase(app);
 
 export { db, ref, set, push, onValue, update, remove };
