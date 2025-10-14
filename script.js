@@ -14,9 +14,9 @@ let users = JSON.parse(localStorage.getItem(LS_USERS_KEY)) || [
 ];
 let activeUser = JSON.parse(localStorage.getItem(LS_ACTIVE_KEY)) || null;
 
-// Koleksi data realtime dari Firebase
-let dataKas = [];
-let pendingQRIS = [];
+// Koleksi data realtime
+let dataKas = [];        // dari /transaksi
+let pendingQRIS = [];    // dari /pending_qris
 
 const saveUsers  = ()=>localStorage.setItem(LS_USERS_KEY,  JSON.stringify(users));
 const saveActive = ()=>localStorage.setItem(LS_ACTIVE_KEY, JSON.stringify(activeUser));
@@ -44,7 +44,7 @@ function register() {
   if (users.some(u => u.username.toLowerCase() === name.toLowerCase())) {
     return alert('Nama pengguna sudah ada.');
   }
-  // Simpan user ke Firebase (opsional) + local list agar bisa login
+  // Simpan user (opsional) + local agar bisa login
   const userRef = ref(db, 'users/' + name);
   set(userRef, { username: name, password: pass, role: 'member' });
   users.push({ username: name, password: pass, role: 'member' });
@@ -152,7 +152,6 @@ function renderTable(){
       <td>${item.kategori}</td>
       <td>${item.ket||'-'}</td>
       <td>${rupiah(item.jumlah)}</td>
-      ${/* kolom aksi dipertahankan struktur th-nya (id="aksiHead") tetapi tanpa tombol kalau member */''}
     `;
     body.appendChild(tr);
   });
@@ -167,8 +166,8 @@ function ajukanQRIS(){
   const ket=document.getElementById('qrisKeterangan').value.trim();
   if(!nama||!nominal)return alert('Nama dan nominal wajib diisi.');
 
-  const qrisRef = ref(db, 'qris/');
-  push(qrisRef, { nama, nominal, ket, tanggal: todayStr(), status:'PENDING', metode:'DANA' });
+  const qRef = ref(db, 'pending_qris/');
+  push(qRef, { nama, nominal, ket, tanggal: todayStr(), status:'PENDING', metode:'QRIS' });
 
   alert('Permintaan QRIS dikirim, menunggu konfirmasi admin.');
   document.getElementById('qrisNama').value='';
@@ -182,7 +181,8 @@ function renderPendingQRIS(){
   tbody.innerHTML='';
   pendingQRIS.slice().reverse().forEach(item=>{
     const action = (activeUser?.role==='admin' && item.status==='PENDING')
-      ? `<button class="success" onclick="konfirmasiQRIS('${item.id}')">Konfirmasi</button>` : '-';
+      ? `<button class="success" onclick="konfirmasiQRIS('${item.id}')">Konfirmasi</button>`
+      : '-';
     const tr=document.createElement('tr');
     tr.innerHTML=`
       <td>${item.nama}</td>
@@ -194,68 +194,67 @@ function renderPendingQRIS(){
   });
 }
 
-function konfirmasiQRIS(id) {
-  if (!confirm("Yakin ingin konfirmasi pembayaran ini?")) return;
+/* KONFIRMASI:
+   1) Tambah pemasukan ke /transaksi
+   2) Hapus dari /pending_qris agar hilang dari tabel
+   3) UI update realtime via onValue() */
+function konfirmasiQRIS(id){
+  const target = pendingQRIS.find(x=>x.id===id);
+  if(!target) return alert('Data tidak ditemukan.');
+  if(activeUser?.role!=='admin') return alert('Hanya admin yang bisa konfirmasi.');
 
-  const pembayaran = pendingQRISList.find(item => item.id === id);
-  if (!pembayaran) return alert("Data tidak ditemukan.");
-
-  // Tambahkan ke transaksi Firebase
-  const transaksiRef = ref(db, 'transaksi/');
-  push(transaksiRef, {
+  // 1) Tambahkan transaksi pemasukan (kategori QRIS)
+  const tRef = ref(db, 'transaksi/');
+  push(tRef, {
     tanggal: todayStr(),
-    nama: pembayaran.nama,
+    nama: target.nama,
     tipe: 'pemasukan',
     kategori: 'QRIS',
-    ket: pembayaran.ket || 'Pembayaran via QRIS',
-    jumlah: pembayaran.nominal,
+    ket: target.ket || 'Pembayaran via QRIS',
+    jumlah: target.nominal,
     source: 'QRIS'
   });
 
-  // Hapus dari pending
-  const pendingRef = ref(db, 'pending_qris/' + id);
-  remove(pendingRef)
-    .then(() => {
-      alert("✅ Pembayaran berhasil dikonfirmasi!");
-    })
-    .catch((err) => {
-      console.error(err);
-      alert("Gagal menghapus data pending.");
-    });
-}
-
-
-  alert('QRIS dikonfirmasi & tercatat sebagai pemasukan.');
+  // 2) Hapus dari pending
+  const pRef = ref(db, 'pending_qris/' + id);
+  remove(pRef).then(()=>{
+    alert('Pembayaran dikonfirmasi. Transaksi tercatat & pending dihapus.');
+  }).catch(err=>{
+    console.error(err);
+    alert('Gagal menghapus data pending.');
+  });
 }
 
 /********************
  * LAPORAN / REKAP
  ********************/
 function tampilRekap(){
-  const mode=document.getElementById('modeRekap').value;
+  const mode=document.getElementById('modeRekap')?.value || 'bulan';
   const agg={};
   for(const it of dataKas){
-    let key=it.tanggal; // default per hari
+    let key=it.tanggal; // default harian dd/mm/yyyy
     if(mode==='bulan'){
       const [d,m,y]=it.tanggal.split('/');
-      key=`${m}/${y}`;
+      key=`${m}/${y}`;      // mm/yyyy
     }else if(mode==='tahun'){
       const [d,m,y]=it.tanggal.split('/');
-      key=y;
+      key=y;                // yyyy
     }else if(mode==='minggu'){
-      // minggu sederhana: YYYY-Wxx bisa ditambah kalau perlu
+      // simple bucket mingguan: yyyy-mm (bisa disempurnakan ke ISO week)
       const [d,m,y]=it.tanggal.split('/');
-      key=`W?/${y}`;
+      key=`${m}/${y}`;
     }
-    if(!agg[key])agg[key]=[];
-    agg[key].push(it);
+    (agg[key] ||= []).push(it);
   }
+
   const tbody=document.getElementById('rekapBody');
+  if(!tbody)return;
   tbody.innerHTML='';
   Object.entries(agg).forEach(([period,transaksi])=>{
     let totalIn=0,totalOut=0;
     transaksi.forEach(t=>{
-      if(t.tipe==='pemasukan')totalIn+=t.jumlah; else totalOut+=t.jumlah;
+      if(t.tipe==='pemasukan') totalIn+=t.jumlah;
+      else totalOut+=t.jumlah;
     });
     const saldo=totalIn-totalOut;
     transaksi.forEach((t,idx)=>{
@@ -294,7 +293,7 @@ function renderDashboard(){
   document.getElementById('sumSaldo').textContent= rupiah(saldo);
   const headerSaldo=document.getElementById('saldoHeader'); if(headerSaldo) headerSaldo.textContent=rupiah(saldo);
 
-  // hitung transaksi bulan ini (sederhana, berdasarkan bulan saat ini)
+  // jumlah transaksi bulan ini
   const now=new Date(); const m=now.getMonth()+1; const y=now.getFullYear();
   const countMonth=dataKas.filter(x=>{
     const [d,mm,yy]=x.tanggal.split('/').map(Number);
@@ -315,38 +314,24 @@ function renderDashboard(){
 }
 
 /********************
- * FIREBASE REALTIME SYNC
+ * FIREBASE REALTIME LISTENERS
  ********************/
-function loadDataFirebase() {
+function listenTransaksi() {
   const transaksiRef = ref(db, 'transaksi/');
   onValue(transaksiRef, (snapshot) => {
     const data = snapshot.val();
-    dataKas = [];
-    if (data) {
-      dataKas = Object.entries(data).map(([id, val]) => ({ id, ...val }));
-    }
+    dataKas = data ? Object.entries(data).map(([id, val]) => ({ id, ...val })) : [];
     renderTable();
     renderDashboard();
-  });
-
-  const qrisRef = ref(db, 'qris/');
-  onValue(qrisRef, (snapshot)=>{
-    const data = snapshot.val();
-    pendingQRIS = [];
-    if(data){
-      pendingQRIS = Object.entries(data).map(([id,val])=>({id,...val}));
-    }
-    renderPendingQRIS();
+    // Laporan ikut kebawa saat user buka tab Laporan
   });
 }
-function loadPendingQRIS() {
-  const qrisRef = ref(db, 'pending_qris/');
-  onValue(qrisRef, (snapshot) => {
+
+function listenPendingQRIS() {
+  const qref = ref(db, 'pending_qris/');
+  onValue(qref, (snapshot)=>{
     const data = snapshot.val();
-    pendingQRISList = [];
-    if (data) {
-      pendingQRISList = Object.entries(data).map(([id, val]) => ({ id, ...val }));
-    }
+    pendingQRIS = data ? Object.entries(data).map(([id,val])=>({id,...val})) : [];
     renderPendingQRIS();
   });
 }
@@ -357,11 +342,11 @@ function loadPendingQRIS() {
 function initUIAfterLogin(){
   overlay.style.display='none';
   applyRoleUI();
-  loadDataFirebase();
-  loadPendingQRIS();// realtime sync
+  listenTransaksi();
+  listenPendingQRIS();
 }
 
-// Ekspor fungsi ke window agar bisa dipanggil dari HTML (onclick)
+// Ekspor ke window agar bisa dipanggil dari HTML (onclick)
 window.register = register;
 window.login = login;
 window.logout = logout;
