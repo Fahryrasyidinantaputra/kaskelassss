@@ -2,119 +2,125 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Kas Kelas</title>
-  <link rel="stylesheet" href="style.css"/>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    if (!localStorage.getItem('kk_active_user')) {
-      location.replace('login.html');
-    }
-  </script>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kas Kelas UBP — Dashboard</title>
+  <link rel="icon" href="assets/logo.png" />
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- SheetJS (Excel) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- Firebase (CDN) -->
+  <script src="firebase.js"></script>
+
+  <style>
+    /* elemen kecil khusus halaman ini */
+    .grid-3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+    .kpi h3{margin:0 0 4px;font-size:14px;color:#667085}
+    .kpi .val{font-size:24px;font-weight:700;color:#0d6efd}
+    .chart-wrap{position:relative;width:100%;height:280px}
+    .header-flex{display:flex;align-items:center;gap:14px;justify-content:space-between;margin-bottom:18px}
+    .user-pill{background:#eef4ff;color:#0d47a1;border-radius:999px;padding:8px 12px;font-weight:600}
+    .section{display:none}.section.active{display:block}
+    .two-col{display:grid;grid-template-columns:1.3fr .9fr;gap:18px}
+    @media(max-width:900px){.grid-3,.two-col{grid-template-columns:1fr}}
+    .muted{color:#6b7280;font-size:13px}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+    .toolbar input{max-width:260px}
+  </style>
 </head>
 <body>
-  <!-- ===== AUTH OVERLAY (Login / Sign Up) ===== -->
-  <div id="authOverlay" class="overlay">
-    <div class="auth-card">
-      <div class="auth-tabs">
-        <button class="tab active" data-tab="loginPanel">Masuk</button>
-        <button class="tab" data-tab="signupPanel">Daftar</button>
+  <!-- Guard: kalau belum login, redirect ke login.html -->
+  <script>
+    const __user = JSON.parse(localStorage.getItem('activeUser')||'null');
+    if(!__user){ location.replace('login.html'); }
+  </script>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2>Kas Kelas UBP</h2>
+    <a class="navlink active" data-section="dashboard">🏠 Dashboard</a>
+    <a class="navlink" data-section="transaksi">💰 Transaksi</a>
+    <a class="navlink" data-section="qris">📱 QRIS</a>
+    <a class="navlink" data-section="laporan">📊 Laporan</a>
+    <a class="navlink" data-section="aktivitas">📋 Aktivitas</a>
+
+    <div class="logout-btn" onclick="logout()">Keluar</div>
+  </aside>
+
+  <main class="main">
+    <div class="header-flex">
+      <div>
+        <h1 style="margin:0">Dashboard Kas Kelas</h1>
+        <p class="muted" id="permNote">Anda login sebagai …</p>
       </div>
-      <div id="loginPanel" class="tab-panel active">
-        <h3>Masuk</h3>
-        <input id="loginUser" placeholder="Username"/>
-        <input id="loginPass" placeholder="Password" type="password"/>
-        <button class="primary" onclick="login()">Masuk</button>
-      </div>
-      <div id="signupPanel" class="tab-panel">
-        <h3>Daftar</h3>
-        <input id="regUser" placeholder="Username"/>
-        <input id="regPass" placeholder="Password" type="password"/>
-        <p class="muted">Akun baru otomatis ber-role <b>anggota</b>.</p>
-        <button class="primary" onclick="register()">Buat Akun</button>
-      </div>
+      <div class="user-pill" id="userBadge">—</div>
     </div>
-  </div>
 
-  <div class="app">
-    <!-- ===== SIDEBAR ===== -->
-    <aside class="sidebar">
-      <h2>Kas Kelas</h2>
-      <nav>
-        <button class="navlink active" data-section="dashboard">🏠 Dashboard</button>
-        <button class="navlink" data-section="transaksi">💰 Transaksi</button>
-        <button class="navlink" data-section="qris">📱 QRIS</button>
-        <button class="navlink" data-section="laporan">📊 Laporan</button>
-      </nav>
-      <div class="userbox">
-        <div class="badge" id="userBadge">—</div>
-        <button class="danger outline" onclick="logout()">Keluar</button>
+    <!-- DASHBOARD -->
+    <section id="dashboard" class="section active">
+      <div class="grid-3">
+        <div class="card kpi">
+          <h3>Saldo Saat Ini</h3>
+          <div class="val" id="sumSaldo">Rp 0</div>
+          <div class="muted">Saldo terkini dari semua transaksi</div>
+        </div>
+        <div class="card kpi">
+          <h3>Pemasukan</h3>
+          <div class="val" id="sumIn">Rp 0</div>
+        </div>
+        <div class="card kpi">
+          <h3>Pengeluaran</h3>
+          <div class="val" id="sumOut">Rp 0</div>
+        </div>
       </div>
-    </aside>
 
-    <!-- ===== MAIN ===== -->
-    <main class="main">
-      <!-- ===== DASHBOARD ===== -->
-      <section id="dashboard" class="section active">
-        <div class="topbar">
-          <h1>Dashboard Kas Kelas</h1>
-          <div class="saldo-pill">Saldo: <span id="saldoHeader">Rp 0</span></div>
+      <div class="two-col">
+        <div class="card">
+          <h3 style="margin-bottom:10px">Rasio Pemasukan vs Pengeluaran</h3>
+          <div class="chart-wrap"><canvas id="miniChart"></canvas></div>
         </div>
-        <p id="permNote" class="muted"></p>
+        <div class="card">
+          <h3 style="margin-bottom:10px">Tren Saldo</h3>
+          <div class="chart-wrap" style="height:300px"><canvas id="trendChart"></canvas></div>
+        </div>
+      </div>
+    </section>
 
-        <div class="cards-3">
-          <div class="card k-saldo">
-            <span class="k-label">Saldo Saat Ini</span>
-            <div class="k-value" id="sumSaldo">Rp 0</div>
-            <div class="k-desc">Saldo terkini dari semua transaksi</div>
-          </div>
-          <div class="card k-metric">
-            <span class="k-label">Pemasukan</span>
-            <div class="k-value" id="sumIn">Rp 0</div>
-          </div>
-          <div class="card k-metric">
-            <span class="k-label">Pengeluaran</span>
-            <div class="k-value" id="sumOut">Rp 0</div>
+    <!-- TRANSAKSI -->
+    <section id="transaksi" class="section">
+      <div class="card">
+        <div class="header-flex">
+          <h2 style="margin:0">Transaksi</h2>
+          <div class="toolbar">
+            <button id="btnExportXls" class="btn-secondary" type="button">Export Excel</button>
+            <button id="btnExportPdf" class="btn-primary" type="button">Export PDF</button>
           </div>
         </div>
 
-        <div class="cards-2">
-          <div class="card k-metric">
-            <span class="k-label">Transaksi Bulan Ini</span>
-            <div class="k-value" id="countThisMonth">0</div>
-          </div>
-          <div class="card chart-card">
-            <div class="chart-head">Rasio Kas</div>
-            <div class="chart-wrap" style="position:relative;width:100%;height:280px;">
-              <canvas id="miniChart"></canvas>
-            </div>
-
-            <div class="legend-row">
-              <span class="dot dot-in"></span> Pemasukan
-              <span class="dot dot-out"></span> Pengeluaran
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- ===== TRANSAKSI ===== -->
-      <section id="transaksi" class="section">
-        <h2>Tambah Transaksi</h2>
-        <div id="formTransaksi" class="form-grid">
-          <input id="nama" placeholder="Nama"/>
+        <!-- Form tambah (admin only, otomatis disembunyikan untuk anggota) -->
+        <div id="formTransaksi" class="grid-3" style="grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:12px">
+          <input id="nama" placeholder="Nama" />
           <select id="tipe">
-            <option value="pemasukan">Pemasukan</option>
+            <option value="pemasukan" selected>Pemasukan</option>
             <option value="pengeluaran">Pengeluaran</option>
           </select>
-          <input id="kategori" placeholder="Kategori (Kas Rutin/Donasi/...)"/>
-          <input id="keterangan" placeholder="Keterangan"/>
-          <input id="jumlah" type="number" placeholder="Jumlah (Rp)"/>
-          <button class="primary" onclick="tambahTransaksi()">Simpan</button>
+          <select id="kategori">
+            <option>Kas Rutin</option><option>Donasi</option><option>QRIS</option><option>Lainnya</option>
+          </select>
+          <input id="keterangan" placeholder="Keterangan (opsional)" />
+          <input id="jumlah" type="number" min="0" placeholder="Jumlah (Rp)" />
+          <button class="btn-primary" type="button" onclick="tambahTransaksi()">Tambah</button>
         </div>
 
-        <h3>Daftar Transaksi</h3>
-        <div class="table-wrap">
-          <table>
+        <div class="table-container">
+          <table class="table" id="tabelKas">
             <thead>
               <tr>
                 <th>Tanggal</th>
@@ -129,75 +135,85 @@
             <tbody id="tabelKasBody"></tbody>
           </table>
         </div>
-      </section>
 
-      <!-- ===== QRIS ===== -->
-      <section id="qris" class="section">
-        <h2>Pembayaran via QRIS (DANA)</h2>
-        <div class="qris-container">
-          <div class="qris-left">
-            <img src="assets/qris-placeholder.png" alt="QRIS DANA" class="qris-image">
-            <p class="muted">*Scan QR DANA ini menggunakan aplikasi DANA untuk membayar kas kelas.</p>
-          </div>
-          <div class="qris-right">
-            <h3>Form Pembayaran</h3>
-            <input id="qrisNama" placeholder="Nama Pembayar">
-            <input id="qrisNominal" type="number" placeholder="Nominal (Rp)">
-            <input id="qrisKeterangan" placeholder="Keterangan (opsional)">
-            <button class="primary" onclick="ajukanQRIS()">Saya Sudah Bayar</button>
+        <div id="totalKategori" style="margin-top:12px" class="muted"></div>
+      </div>
+    </section>
+
+    <!-- QRIS -->
+    <section id="qris" class="section">
+      <div class="two-col">
+        <div class="card">
+          <h2 style="margin-top:0">Pembayaran via QRIS</h2>
+          <p class="muted">Upload bukti (opsional) untuk mempercepat verifikasi admin.</p>
+          <div class="grid-3" style="grid-template-columns:repeat(2,1fr);gap:10px">
+            <input id="qrisNama" placeholder="Nama Pembayar" />
+            <input id="qrisNominal" type="number" min="0" placeholder="Nominal (Rp)" />
+            <input id="qrisKeterangan" placeholder="Keterangan (opsional)" style="grid-column:1/3" />
+            <input id="qrisBukti" type="file" accept="image/*" style="grid-column:1/2" />
+            <button class="btn-primary" type="button" onclick="ajukanQRIS()" style="grid-column:2/3">Saya Sudah Bayar</button>
           </div>
         </div>
 
-        <div class="panel">
-          <h4>Daftar Pembayaran Pending</h4>
-          <table>
+        <div class="card">
+          <h3 style="margin:0 0 8px">Daftar Pembayaran Pending</h3>
+          <div class="table-container">
+            <table class="table" id="pendingTable">
+              <thead>
+                <tr>
+                  <th>Nama</th>
+                  <th>Nominal</th>
+                  <th>Keterangan</th>
+                  <th>Bukti</th>
+                  <th>Status</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="pendingBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- LAPORAN -->
+    <section id="laporan" class="section">
+      <div class="card">
+        <div class="header-flex">
+          <h2 style="margin:0">Laporan</h2>
+          <div class="toolbar">
+            <button id="btnExportXls2" class="btn-secondary" type="button">Export Excel</button>
+            <button id="btnExportPdf2" class="btn-primary" type="button">Export PDF</button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="table" id="rekapTable">
             <thead>
               <tr>
+                <th>Tanggal</th>
                 <th>Nama</th>
-                <th>Nominal</th>
-                <th>Keterangan</th>
-                <th>Status</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody id="pendingBody"></tbody>
-          </table>
-        </div>
-        Alur: anggota membuat permintaan → status <b>Pending</b> → admin menekan <b>Konfirmasi</b> → transaksi pemasukan otomatis tercatat dengan sumber
-      </section>
-
-      <!-- ===== LAPORAN ===== -->
-      <section id="laporan" class="section">
-        <h2>Laporan & Rekap</h2>
-        <div class="toolbar">
-          <select id="modeRekap" onchange="tampilRekap()">
-            <option value="hari">Per Hari</option>
-            <option value="minggu">Per Minggu</option>
-            <option value="bulan" selected>Per Bulan</option>
-            <option value="tahun">Per Tahun</option>
-          </select>
-          <button onclick="exportExcel()">Export Excel</button>
-        </div>
-        <div class="table-wrap">
-          <table id="rekapTable">
-            <thead>
-              <tr>
-                <th>Periode</th>
-                <th>Nama Pembayar</th>
-                <th>Sumber Pembayaran</th>
+                <th>Kategori</th>
                 <th>Pemasukan</th>
                 <th>Pengeluaran</th>
-                <th>Saldo</th>
+                <th>Saldo Hari Itu</th>
               </tr>
             </thead>
             <tbody id="rekapBody"></tbody>
           </table>
         </div>
-      </section>
-    </main>
-  </div>
+      </div>
+    </section>
 
-  <!-- PENTING: hanya 1 module -->
-  <script type="module" src="script.js"></script>
+    <!-- AKTIVITAS -->
+    <section id="aktivitas" class="section">
+      <div class="card">
+        <h2 style="margin-top:0">Aktivitas</h2>
+        <div id="aktivitasList" class="muted" style="display:grid;gap:8px"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
 </body>
 </html>
