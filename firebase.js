@@ -1,4 +1,4 @@
-// Firebase (v8) – bekerja di GitHub Pages tanpa module/import
+// Firebase v8 (kompatibel GitHub Pages)
 const firebaseConfig = {
   apiKey: "AIzaSyCv-ki8V75XjFZ-6E9S2Q49SLsVKh5YtKg",
   authDomain: "kaskelasa-e9c8b.firebaseapp.com",
@@ -8,10 +8,10 @@ const firebaseConfig = {
   messagingSenderId: "20448185139",
   appId: "1:20448185139:web:99a5d1c81c1a61650e4c46"
 };
-
 firebase.initializeApp(firebaseConfig);
+
 const db = firebase.database();
 const storage = firebase.storage();
 
-// Konfigurasi iuran mingguan (boleh diubah via “Pengaturan” di dashboard)
+// Konfigurasi global
 const DEFAULT_IURAN = 5000;
