@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Kas Kelas IF 24-A — Login</title>
   <link rel="icon" href="assets/logo.png" />
-  <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <!-- Firebase v8 -->
@@ -47,37 +46,13 @@
       margin-top: 0;
       margin-bottom: 20px;
     }
-    .tabs {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .tab {
-      padding: 8px 18px;
-      border-radius: 10px;
-      border: 1.5px solid #ccc;
-      background: #f6f6f6;
-      cursor: pointer;
-      transition: all 0.25s;
-      font-weight: 500;
-    }
-    .tab.active {
-      background: #0d6efd;
-      color: white;
-      border-color: #0d6efd;
-    }
-    form {
-      display: none;
-      text-align: left;
-    }
-    form.active {display: block;}
     label {
       font-weight: 600;
       font-size: 13px;
       color: #333;
       margin-top: 8px;
       display: block;
+      text-align: left;
     }
     input {
       width: 100%;
@@ -109,7 +84,7 @@
       color: white;
       border: none;
       padding: 12px;
-      margin-top: 15px;
+      margin-top: 18px;
       border-radius: 8px;
       cursor: pointer;
       font-weight: 600;
@@ -131,17 +106,11 @@
   <div class="card">
     <img src="assets/logo.png" alt="Logo" style="width:70px;margin-bottom:10px;">
     <h2>Kas Kelas IF 24-A</h2>
-    <p>Dashboard kas kelas </p>
+    <p>Dashboard kas kelas modern & real-time</p>
 
-    <div class="tabs">
-      <div class="tab active" data-tab="login">Login</div>
-      <div class="tab" data-tab="signup">Daftar</div>
-    </div>
-
-    <!-- LOGIN -->
-    <form id="loginForm" class="active">
-      <label>Username / NIM</label>
-      <input id="loginUser" placeholder="NIM anda" />
+    <form id="loginForm">
+      <label>NIM (username)</label>
+      <input id="loginUser" placeholder="24416255xxxxx" />
       <label>Password</label>
       <div class="password-wrapper">
         <input id="loginPass" type="password" placeholder="email kampus" />
@@ -150,67 +119,44 @@
       <button type="button" id="btnLogin">Masuk</button>
       <small>Admin: <b>admin</b> / <b>12345</b></small>
     </form>
-
-    <!-- SIGNUP -->
- 
   </div>
 
   <script>
     const toast = (icon, text) => Swal.fire({icon, text, timer:1400, showConfirmButton:false});
 
-    // tab switching
-    document.querySelectorAll('.tab').forEach(tab => {
-      tab.onclick = () => {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        document.getElementById('loginForm').classList.remove('active');
-        document.getElementById('signupForm').classList.remove('active');
-        document.getElementById(tab.dataset.tab + 'Form').classList.add('active');
-      };
-    });
-
-    // show/hide password
+    // fitur lihat password
     document.getElementById("toggleLoginPw").onclick = () => {
       const pass = document.getElementById("loginPass");
       pass.type = pass.type === "password" ? "text" : "password";
     };
 
-    // admin seed
+    // seed admin jika belum ada
     db.ref('users/admin').once('value', s=>{
       if(!s.exists()){
-        db.ref('users/admin').set({ nama:'Administrator', username:'admin', password:'12345', role:'admin', aktif:true });
+        db.ref('users/admin').set({
+          nama:'Administrator',
+          username:'admin',
+          password:'12345',
+          role:'admin',
+          aktif:true
+        });
       }
     });
 
-    // login
+    // login fungsi
     document.getElementById('btnLogin').onclick = ()=>{
       const u = loginUser.value.trim();
       const p = loginPass.value.trim();
       if(!u||!p) return toast('warning','Lengkapi username & password');
+
       db.ref('users/'+u).once('value', snap=>{
         if(!snap.exists()) return toast('error','Username tidak ditemukan');
         const user = snap.val();
         if(user.password !== p) return toast('error','Password salah');
         if(user.aktif === false) return toast('error','Akun nonaktif');
         localStorage.setItem('activeUser', JSON.stringify(user));
-        toast('success','Login berhasil'); 
+        toast('success','Login berhasil');
         setTimeout(()=>location.href='index.html',350);
-      });
-    };
-
-    // signup
-    document.getElementById('btnSignup').onclick = ()=>{
-      const nama = regNama.value.trim();
-      const user = regUser.value.trim();
-      const email = regEmail.value.trim();
-      if(!nama||!user||!email) return toast('warning','Lengkapi semua data');
-      db.ref('users/'+user).once('value', s=>{
-        if(s.exists()) return toast('error','NIM sudah terdaftar');
-        db.ref('users/'+user).set({ nama, username:user, email, password:email, role:'anggota', aktif:true })
-        .then(()=>{
-          toast('success','Akun dibuat. Silakan login.');
-          document.querySelector('.tab[data-tab="login"]').click();
-        });
       });
     };
   </script>
