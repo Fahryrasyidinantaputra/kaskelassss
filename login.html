@@ -1,67 +1,103 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Masuk | Kas Kelas</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kas Kelas UBP - Login</title>
+  <link rel="stylesheet" href="style.css">
   <link rel="icon" href="assets/logo.png">
-  <style>
-    *{box-sizing:border-box;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
-    body{
-      margin:0;min-height:100vh;display:grid;place-items:center;
-      background:radial-gradient(80% 120% at 10% -10%, #eaf3ff, transparent),
-                 radial-gradient(80% 120% at 110% 10%, #f5f9ff, transparent),
-                 linear-gradient(180deg, #f7fbff, #ffffff);
-    }
-    .wrap{width:min(960px,92vw);display:grid;grid-template-columns:1.2fr 1fr;gap:28px;align-items:center;animation:fade .5s ease}
-    .hero h1{margin:0 0 6px;font-size:40px;color:#0b1830}
-    .hero p{margin:0;color:#6b7280}
-    .card{
-      background:rgba(255,255,255,.9);border:1px solid #e9eef7;border-radius:18px;
-      padding:22px;box-shadow:0 22px 44px rgba(13,110,253,.08)
-    }
-    .tabs{display:flex;gap:8px;margin-bottom:12px}
-    .tabs button{flex:1;border:1px solid #e8eef8;border-radius:12px;background:#f5f8ff;padding:10px;cursor:pointer}
-    .tabs button.active{background:#0d6efd;color:#fff;border-color:#0d6efd}
-    label{display:block;color:#60697b;font-size:13px;margin:10px 0 6px}
-    input{width:100%;padding:12px;border:1px solid #e5e9f2;border-radius:12px;font-size:15px}
-    .btn{width:100%;margin-top:12px;background:#0d6efd;border:none;color:#fff;padding:12px;border-radius:12px;font-weight:700;cursor:pointer}
-    .panel{display:none}.panel.active{display:block}
-    @media(max-width:900px){.wrap{grid-template-columns:1fr}.hero{text-align:center;order:2}}
-    @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-  </style>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
-<body>
-  <div class="wrap">
-    <div class="hero">
-      <h1>Kas Kelas UBP Karawang</h1>
-      <p>Login untuk mengelola pemasukan, pengeluaran, dan konfirmasi QRIS.</p>
+<body class="login-page">
+
+  <div class="login-container card fade-in">
+    <img src="assets/logo.png" alt="Logo" class="login-logo">
+    <h2>Kas Kelas UBP</h2>
+
+    <div class="tab-group">
+      <button class="tab-btn active" id="loginTab">Login</button>
+      <button class="tab-btn" id="registerTab">Daftar</button>
     </div>
 
-    <div class="card">
-      <div class="tabs">
-        <button id="tabLogin" class="active">Login</button>
-        <button id="tabSignup">Daftar</button>
-      </div>
+    <form id="loginForm" class="active">
+      <label>Username</label>
+      <input type="text" id="loginUsername" placeholder="Masukkan username">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="Masukkan password">
+      <button type="submit" class="btn-primary">Masuk</button>
+    </form>
 
-      <div id="panelLogin" class="panel active">
-        <label>Username</label>
-        <input id="loginUser" placeholder="masukan username">
-        <label>Password</label>
-        <input id="loginPass" type="password" placeholder="masukan password">
-        <button class="btn" id="btnLogin">Masuk</button>
-      </div>
-
-      <div id="panelSignup" class="panel">
-        <label>Username</label>
-        <input id="regUser" placeholder="masukan username">
-        <label>Password</label>
-        <input id="regPass" type="password" placeholder="masukan password">
-        <button class="btn" id="btnSignup">Daftar Anggota</button>
-      </div>
-    </div>
+    <form id="registerForm">
+      <label>Nama Lengkap</label>
+      <input type="text" id="regNama" placeholder="Masukkan nama lengkap">
+      <label>Username</label>
+      <input type="text" id="regUsername" placeholder="Masukkan username">
+      <label>Password</label>
+      <input type="password" id="regPassword" placeholder="Buat password">
+      <label>Kelas</label>
+      <select id="regKelas">
+        <option value="10A">10A</option>
+        <option value="10B">10B</option>
+        <option value="11A">11A</option>
+      </select>
+      <button type="submit" class="btn-secondary">Daftar</button>
+    </form>
   </div>
 
-  <script type="module" src="login.js"></script>
+  <script src="firebase.js"></script>
+  <script>
+    const loginTab = document.getElementById('loginTab');
+    const registerTab = document.getElementById('registerTab');
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+
+    loginTab.onclick = () => {
+      loginTab.classList.add('active');
+      registerTab.classList.remove('active');
+      loginForm.classList.add('active');
+      registerForm.classList.remove('active');
+    };
+    registerTab.onclick = () => {
+      registerTab.classList.add('active');
+      loginTab.classList.remove('active');
+      registerForm.classList.add('active');
+      loginForm.classList.remove('active');
+    };
+
+    // LOGIN
+    loginForm.onsubmit = (e) => {
+      e.preventDefault();
+      const u = loginUsername.value.trim();
+      const p = loginPassword.value.trim();
+
+      firebase.database().ref("users").once("value", snap => {
+        let users = snap.val() || {};
+        let found = Object.values(users).find(v => v.username === u && v.password === p);
+        if(found){
+          localStorage.setItem("activeUser", JSON.stringify(found));
+          Swal.fire({ icon:"success", text:"Login berhasil!", timer:1200, showConfirmButton:false });
+          setTimeout(()=>location.href="index.html",1300);
+        } else {
+          Swal.fire({ icon:"error", text:"Username atau password salah!" });
+        }
+      });
+    };
+
+    // REGISTER
+    registerForm.onsubmit = (e)=>{
+      e.preventDefault();
+      const nama = regNama.value.trim();
+      const username = regUsername.value.trim();
+      const password = regPassword.value.trim();
+      const kelas = regKelas.value;
+
+      if(!nama||!username||!password) return Swal.fire({ icon:"warning", text:"Lengkapi semua data!" });
+      const refUsers = firebase.database().ref("users");
+      const newUser = { nama, username, password, kelas, role:"anggota" };
+      refUsers.push(newUser);
+      Swal.fire({ icon:"success", text:"Pendaftaran berhasil!" });
+      regNama.value = regUsername.value = regPassword.value = "";
+    };
+  </script>
 </body>
 </html>
