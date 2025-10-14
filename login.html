@@ -1,75 +1,64 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Masuk | Kas Kelas</title>
   <link rel="icon" href="assets/logo.png">
   <style>
-    *{box-sizing:border-box;font-family:'Poppins',sans-serif}
+    *{box-sizing:border-box;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
     body{
-      margin:0;min-height:100vh;display:flex;justify-content:center;align-items:center;
-      background:linear-gradient(120deg,#e8f0ff 0%,#f7f9ff 40%,#ffffff 100%);
+      margin:0;min-height:100vh;display:grid;place-items:center;
+      background:radial-gradient(80% 120% at 10% -10%, #eaf3ff, transparent),
+                 radial-gradient(80% 120% at 110% 10%, #f5f9ff, transparent),
+                 linear-gradient(180deg, #f7fbff, #ffffff);
     }
-    .container{
-      background:rgba(255,255,255,0.85);
-      backdrop-filter:blur(10px);
-      padding:40px;
-      border-radius:20px;
-      box-shadow:0 20px 40px rgba(0,0,0,0.1);
-      width:360px;animation:fadeIn .6s ease;
+    .wrap{width:min(960px,92vw);display:grid;grid-template-columns:1.2fr 1fr;gap:28px;align-items:center;animation:fade .5s ease}
+    .hero h1{margin:0 0 6px;font-size:40px;color:#0b1830}
+    .hero p{margin:0;color:#6b7280}
+    .card{
+      background:rgba(255,255,255,.9);border:1px solid #e9eef7;border-radius:18px;
+      padding:22px;box-shadow:0 22px 44px rgba(13,110,253,.08)
     }
-    h2{text-align:center;color:#0d6efd;margin-bottom:10px}
-    .tabs{display:flex;justify-content:center;margin-bottom:15px;}
-    .tabs button{
-      border:none;background:#f0f4ff;padding:8px 16px;margin:0 4px;border-radius:10px;
-      cursor:pointer;font-weight:600;color:#0d6efd;transition:0.3s;
-    }
-    .tabs button.active{background:#0d6efd;color:#fff;}
-    .input-group{margin-bottom:15px;}
-    label{display:block;margin-bottom:5px;color:#333;font-size:14px;}
-    input{
-      width:100%;padding:10px;border:1px solid #ccc;border-radius:10px;outline:none;
-    }
-    button.login-btn{
-      width:100%;padding:10px;margin-top:5px;border:none;border-radius:10px;
-      background:#0d6efd;color:#fff;font-weight:600;cursor:pointer;transition:0.3s;
-    }
-    button.login-btn:hover{background:#0b5ed7;}
-    @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .tabs{display:flex;gap:8px;margin-bottom:12px}
+    .tabs button{flex:1;border:1px solid #e8eef8;border-radius:12px;background:#f5f8ff;padding:10px;cursor:pointer}
+    .tabs button.active{background:#0d6efd;color:#fff;border-color:#0d6efd}
+    label{display:block;color:#60697b;font-size:13px;margin:10px 0 6px}
+    input{width:100%;padding:12px;border:1px solid #e5e9f2;border-radius:12px;font-size:15px}
+    .btn{width:100%;margin-top:12px;background:#0d6efd;border:none;color:#fff;padding:12px;border-radius:12px;font-weight:700;cursor:pointer}
+    .panel{display:none}.panel.active{display:block}
+    @media(max-width:900px){.wrap{grid-template-columns:1fr}.hero{text-align:center;order:2}}
+    @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Kas Kelas</h2>
-
-    <div class="tabs">
-      <button id="tabLogin" class="active">Login</button>
-      <button id="tabSignup">Daftar</button>
+  <div class="wrap">
+    <div class="hero">
+      <h1>Kas Kelas UBP Karawang</h1>
+      <p>Login untuk mengelola pemasukan, pengeluaran, dan konfirmasi QRIS.</p>
     </div>
 
-    <div id="loginForm">
-      <div class="input-group">
-        <label>Username</label>
-        <input type="text" id="loginUser" placeholder="Masukkan username">
+    <div class="card">
+      <div class="tabs">
+        <button id="tabLogin" class="active">Login</button>
+        <button id="tabSignup">Daftar</button>
       </div>
-      <div class="input-group">
-        <label>Password</label>
-        <input type="password" id="loginPass" placeholder="Masukkan password">
-      </div>
-      <button class="login-btn" id="btnLogin">Masuk</button>
-    </div>
 
-    <div id="signupForm" style="display:none;">
-      <div class="input-group">
+      <div id="panelLogin" class="panel active">
         <label>Username</label>
-        <input type="text" id="regUser" placeholder="Masukkan username baru">
-      </div>
-      <div class="input-group">
+        <input id="loginUser" placeholder="mis. admin">
         <label>Password</label>
-        <input type="password" id="regPass" placeholder="Masukkan password baru">
+        <input id="loginPass" type="password" placeholder="••••••">
+        <button class="btn" id="btnLogin">Masuk</button>
       </div>
-      <button class="login-btn" id="btnSignup">Daftar</button>
+
+      <div id="panelSignup" class="panel">
+        <label>Username</label>
+        <input id="regUser" placeholder="mis. fahry">
+        <label>Password</label>
+        <input id="regPass" type="password" placeholder="minimal 4 karakter">
+        <button class="btn" id="btnSignup">Daftar Anggota</button>
+      </div>
     </div>
   </div>
 
