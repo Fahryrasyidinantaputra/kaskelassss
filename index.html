@@ -7,9 +7,10 @@
   <link rel="stylesheet" href="style.css"/>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-  const user=localStorage.getItem('kk_active_user');
-  if(!user) location.href='login.html';
-</script>
+    if (!localStorage.getItem('kk_active_user')) {
+      location.replace('login.html');
+    }
+  </script>
 </head>
 <body>
   <!-- ===== AUTH OVERLAY (Login / Sign Up) ===== -->
