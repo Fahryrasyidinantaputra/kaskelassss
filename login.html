@@ -5,99 +5,85 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kas Kelas UBP - Login</title>
   <link rel="stylesheet" href="style.css">
-  <link rel="icon" href="assets/logo.png">
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="login-page">
-
-  <div class="login-container card fade-in">
-    <img src="assets/logo.png" alt="Logo" class="login-logo">
+  <div class="login-container">
+    <img src="assets/logo.png" class="login-logo" alt="Logo">
     <h2>Kas Kelas UBP</h2>
 
     <div class="tab-group">
-      <button class="tab-btn active" id="loginTab">Login</button>
-      <button class="tab-btn" id="registerTab">Daftar</button>
+      <button class="tab-btn active" data-tab="login">Login</button>
+      <button class="tab-btn" data-tab="daftar">Daftar</button>
     </div>
 
-    <form id="loginForm" class="active">
+    <!-- LOGIN -->
+    <form id="form-login" class="active">
       <label>Username</label>
-      <input type="text" id="loginUsername" placeholder="Masukkan username">
+      <input type="text" id="loginUser" placeholder="Username">
       <label>Password</label>
-      <input type="password" id="loginPassword" placeholder="Masukkan password">
-      <button type="submit" class="btn-primary">Masuk</button>
+      <input type="password" id="loginPass" placeholder="Password">
+      <button type="button" class="btn-primary" onclick="login()">Masuk</button>
     </form>
 
-    <form id="registerForm">
+    <!-- DAFTAR -->
+    <form id="form-daftar">
       <label>Nama Lengkap</label>
-      <input type="text" id="regNama" placeholder="Masukkan nama lengkap">
+      <input type="text" id="regNama" placeholder="Nama Lengkap">
       <label>Username</label>
-      <input type="text" id="regUsername" placeholder="Masukkan username">
+      <input type="text" id="regUser" placeholder="Username">
       <label>Password</label>
-      <input type="password" id="regPassword" placeholder="Buat password">
-      <label>Kelas</label>
-      <select id="regKelas">
-        <option value="10A">10A</option>
-        <option value="10B">10B</option>
-        <option value="11A">11A</option>
-      </select>
-      <button type="submit" class="btn-secondary">Daftar</button>
+      <input type="password" id="regPass" placeholder="Password">
+      <button type="button" class="btn-secondary" onclick="daftar()">Daftar</button>
     </form>
   </div>
 
   <script src="firebase.js"></script>
   <script>
-    const loginTab = document.getElementById('loginTab');
-    const registerTab = document.getElementById('registerTab');
-    const loginForm = document.getElementById('loginForm');
-    const registerForm = document.getElementById('registerForm');
-
-    loginTab.onclick = () => {
-      loginTab.classList.add('active');
-      registerTab.classList.remove('active');
-      loginForm.classList.add('active');
-      registerForm.classList.remove('active');
+  document.querySelectorAll('.tab-btn').forEach(btn=>{
+    btn.onclick=()=>{
+      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('form').forEach(f=>f.classList.remove('active'));
+      document.getElementById('form-'+btn.dataset.tab).classList.add('active');
     };
-    registerTab.onclick = () => {
-      registerTab.classList.add('active');
-      loginTab.classList.remove('active');
-      registerForm.classList.add('active');
-      loginForm.classList.remove('active');
-    };
+  });
 
-    // LOGIN
-    loginForm.onsubmit = (e) => {
-      e.preventDefault();
-      const u = loginUsername.value.trim();
-      const p = loginPassword.value.trim();
+  // Default admin
+  db.ref('users/admin').once('value', snap=>{
+    if(!snap.exists()){
+      db.ref('users/admin').set({ nama:'Administrator', username:'admin', password:'12345', role:'admin' });
+    }
+  });
 
-      firebase.database().ref("users").once("value", snap => {
-        let users = snap.val() || {};
-        let found = Object.values(users).find(v => v.username === u && v.password === p);
-        if(found){
-          localStorage.setItem("activeUser", JSON.stringify(found));
-          Swal.fire({ icon:"success", text:"Login berhasil!", timer:1200, showConfirmButton:false });
-          setTimeout(()=>location.href="index.html",1300);
-        } else {
-          Swal.fire({ icon:"error", text:"Username atau password salah!" });
-        }
+  function login(){
+    const user=document.getElementById('loginUser').value.trim();
+    const pass=document.getElementById('loginPass').value.trim();
+    if(!user||!pass) return alert('Isi username dan password.');
+
+    db.ref('users/'+user).once('value', snap=>{
+      if(!snap.exists()) return alert('Username tidak ditemukan!');
+      const data=snap.val();
+      if(data.password!==pass) return alert('Password salah!');
+      localStorage.setItem('activeUser', JSON.stringify(data));
+      location.href='index.html';
+    });
+  }
+
+  function daftar(){
+    const nama=document.getElementById('regNama').value.trim();
+    const user=document.getElementById('regUser').value.trim();
+    const pass=document.getElementById('regPass').value.trim();
+    if(!nama||!user||!pass) return alert('Lengkapi semua data.');
+
+    db.ref('users/'+user).once('value', snap=>{
+      if(snap.exists()) return alert('Username sudah digunakan.');
+      db.ref('users/'+user).set({ nama, username:user, password:pass, role:'anggota' })
+      .then(()=>{
+        alert('Pendaftaran berhasil! Silakan login.');
+        document.querySelector('[data-tab="login"]').click();
       });
-    };
-
-    // REGISTER
-    registerForm.onsubmit = (e)=>{
-      e.preventDefault();
-      const nama = regNama.value.trim();
-      const username = regUsername.value.trim();
-      const password = regPassword.value.trim();
-      const kelas = regKelas.value;
-
-      if(!nama||!username||!password) return Swal.fire({ icon:"warning", text:"Lengkapi semua data!" });
-      const refUsers = firebase.database().ref("users");
-      const newUser = { nama, username, password, kelas, role:"anggota" };
-      refUsers.push(newUser);
-      Swal.fire({ icon:"success", text:"Pendaftaran berhasil!" });
-      regNama.value = regUsername.value = regPassword.value = "";
-    };
+    });
+  }
   </script>
 </body>
 </html>
