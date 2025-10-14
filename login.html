@@ -11,182 +11,216 @@
   <!-- Firebase v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
   <script src="firebase.js"></script>
+
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(145deg, #e9f0ff 0%, #f5f7fa 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: #fff;
+      width: 360px;
+      padding: 35px;
+      border-radius: 18px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+      text-align: center;
+      animation: fadeIn 0.5s ease;
+    }
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(-15px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+    h2 {
+      margin-bottom: 10px;
+      font-size: 22px;
+      color: #222;
+    }
+    p {
+      color: #777;
+      font-size: 14px;
+      margin-top: 0;
+      margin-bottom: 20px;
+    }
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .tab {
+      padding: 8px 18px;
+      border-radius: 10px;
+      border: 1.5px solid #ccc;
+      background: #f6f6f6;
+      cursor: pointer;
+      transition: all 0.25s;
+      font-weight: 500;
+    }
+    .tab.active {
+      background: #0d6efd;
+      color: white;
+      border-color: #0d6efd;
+    }
+    form {
+      display: none;
+      text-align: left;
+    }
+    form.active {display: block;}
+    label {
+      font-weight: 600;
+      font-size: 13px;
+      color: #333;
+      margin-top: 8px;
+      display: block;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      border: 1.5px solid #ccc;
+      border-radius: 8px;
+      margin-top: 4px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+    input:focus {
+      border-color: #0d6efd;
+      outline: none;
+    }
+    .password-wrapper {
+      position: relative;
+    }
+    .showpw {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      opacity: 0.6;
+    }
+    button {
+      width: 100%;
+      background: #0d6efd;
+      color: white;
+      border: none;
+      padding: 12px;
+      margin-top: 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.25s;
+    }
+    button:hover {
+      background: #084ec2;
+    }
+    small {
+      font-size: 13px;
+      color: #666;
+      display: block;
+      margin-top: 12px;
+      text-align: center;
+    }
+  </style>
 </head>
-<body class="bg">
-  <header class="topbar">
-    <div class="brand">
-      <img src="assets/logo.png" alt="Logo" />
-      <span>Kas Kelas IF 24-A — UBP Karawang</span>
+<body>
+  <div class="card">
+    <img src="assets/logo.png" alt="Logo" style="width:70px;margin-bottom:10px;">
+    <h2>Kas Kelas IF 24-A</h2>
+    <p>Dashboard kas kelas </p>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="login">Login</div>
+      <div class="tab" data-tab="signup">Daftar</div>
     </div>
-  </header>
 
-  <main class="center">
-    <div class="card login-card">
-      <h2>Masuk / Daftar</h2>
-      <p class="muted">Dashboard kas kelas modern & real-time</p>
-
-      <div class="tabs" style="margin-bottom:8px">
-        <button class="tab active" data-tab="login">Login</button>
-        <button class="tab" data-tab="signup">Daftar</button>
+    <!-- LOGIN -->
+    <form id="loginForm" class="active">
+      <label>Username / NIM</label>
+      <input id="loginUser" placeholder="NIM anda" />
+      <label>Password</label>
+      <div class="password-wrapper">
+        <input id="loginPass" type="password" placeholder="email kampus" />
+        <span id="toggleLoginPw" class="showpw">👁</span>
       </div>
+      <button type="button" id="btnLogin">Masuk</button>
+      <small>Admin: <b>admin</b> / <b>12345</b></small>
+    </form>
 
-      <!-- LOGIN -->
-      <form id="loginForm" class="panel active formcol">
-        <label>NIM (username)</label>
-        <input id="loginUser" placeholder="NIM anda" />
+    <!-- SIGNUP -->
+    <form id="signupForm">
+      <label>Nama Lengkap</label>
+      <input id="regNama" placeholder="Nama lengkap" />
+      <label>NIM</label>
+      <input id="regUser" placeholder="NIM anda" />
+      <label>Email Kampus (jadi password awal)</label>
+      <input id="regEmail" placeholder="email kampus" />
+      <button type="button" id="btnSignup">Daftar</button>
+    </form>
+  </div>
 
-        <label>Password</label>
-        <div class="password-wrapper">
-          <input id="loginPass" type="password" placeholder="email kampus" />
-          <span id="toggleLoginPw" class="showpw">👁</span>
-        </div>
-
-        <button type="button" class="btn primary full" id="btnLogin">Masuk</button>
-        <small class="muted">Admin: <b>admin</b> / <b>12345</b></small>
-      </form>
-
-      <!-- SIGNUP -->
-      <form id="signupForm" class="panel formcol">
-        <label>Nama Lengkap</label>
-        <input id="regNama" placeholder="Nama lengkap" />
-
-        <label>NIM (username)</label>
-        <input id="regUser" placeholder="NIM anda" />
-
-        <label>Email Kampus (jadi password awal)</label>
-        <div class="password-wrapper">
-          <input id="regEmail" placeholder="email kampus" />
-          <span id="toggleRegPw" class="showpw">👁</span>
-        </div>
-
-        <button type="button" class="btn full" id="btnSignup">Daftar Anggota</button>
-      </form>
-    </div>
-  </main>
-
-  <footer class="footer">© UBP — Kas Kelas IF 24-A</footer>
-
-  <!-- SCRIPT LOGIN -->
   <script>
     const toast = (icon, text) => Swal.fire({icon, text, timer:1400, showConfirmButton:false});
 
-    // Tabs
-    document.querySelectorAll('.tab').forEach(b=>{
-      b.onclick=()=>{
-        document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
-        b.classList.add('active');
-        document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
-        document.getElementById(b.dataset.tab==='login'?'loginForm':'signupForm').classList.add('active');
+    // tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.onclick = () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('loginForm').classList.remove('active');
+        document.getElementById('signupForm').classList.remove('active');
+        document.getElementById(tab.dataset.tab + 'Form').classList.add('active');
       };
     });
 
-    // Seed ADMIN
+    // show/hide password
+    document.getElementById("toggleLoginPw").onclick = () => {
+      const pass = document.getElementById("loginPass");
+      pass.type = pass.type === "password" ? "text" : "password";
+    };
+
+    // admin seed
     db.ref('users/admin').once('value', s=>{
       if(!s.exists()){
         db.ref('users/admin').set({ nama:'Administrator', username:'admin', password:'12345', role:'admin', aktif:true });
       }
     });
 
-    // Seed IF 24-A (sekali saja)
-    const IF24A = [
-      ["24416255201207","Habiburrohman Azzami","if24.habiburrohmanazzami@mhs.ubpkarawang.ac.id"],
-      ["24416255201205","Tiara Putri Aulia","if24.tiaraaulia@mhs.ubpkarawang.ac.id"],
-      ["24416255201133","Rakha Rafid Fahrezi","if24.rakhafahrezi@mhs.ubpkarawang.ac.id"],
-      ["24416255201004","Indah Rahmawati","if24.indahrahmawati@mhs.ubpkarawang.ac.id"],
-      ["24416255201204","Anwar Ramadhan","if24.anwarramadhan@mhs.ubpkarawang.ac.id"],
-      ["24416255201068","Agga Pratama Putra","if24.anggaputra@mhs.ubpkarawang.ac.id"],
-      ["24416255201209","Rio Rasyha Syadzily","if24.riosyadzily@mhs.ubpkarawang.ac.id"],
-      ["24416255201010","Mohamad Hilmy Haidar","if24.mohamadhaidar@mhs.ubpkarawang.ac.id"],
-      ["24416255201237","Dimaz Wahyudy","if24.dimazwahyudy@mhs.ubpkarawang.ac.id"],
-      ["24416255201215","Suci Nur Saffrilia Dewi","if24.sucidewi@mhs.ubpkarawang.ac.id"],
-      ["24416255201230","Fairuz Putra Sema","if24.fairuzsema@mhs.ubpkarawang.ac.id"],
-      ["24416255201124","Septian Eka Putra","if24.septianputra@mhs.ubpkarawang.ac.id"],
-      ["24416255201110","Daffa Andhika Pratama","if24.daffapratama@mhs.ubpkarawang.ac.id"],
-      ["24416255201213","Aan Ripandi","if24.aanripandi@mhs.ubpkarawang.ac.id"],
-      ["24416255201075","Ahmad Arifin","if24.ahmadarifin@mhs.ubpkarawang.ac.id"],
-      ["24416255201212","Alfi Latifatul Munawaroh","if24.alfilatifatul@mhs.ubpkarawang.ac.id"],
-      ["24416255201115","Nur Mukhlisin","if24.nurmukhlisin@mhs.ubpkarawang.ac.id"],
-      ["24416255201123","Dannys Panji Kurniawan","if24.dannyskurniawan@mhs.ubpkarawang.ac.id"],
-      ["24416255201032","Alyaluna Sasmita","if24.alyalunasasmita@mhs.ubpkarawang.ac.id"],
-      ["24416255201233","Muhammad Hilal Al Mufid","if24.muhammadmufid@mhs.ubpkarawang.ac.id"],
-      ["24416255201203","Fahry Rasyidinanta Putra","if24.fahryputra@mhs.ubpkarawang.ac.id"],
-      ["24416255201211","Sekar Listyana Kartika","if24.sekarkartika@mhs.ubpkarawang.ac.id"],
-      ["24416255201043","Atila Faturrahman Pratama","if24.atilapratama@mhs.ubpkarawang.ac.id"],
-      ["24416255201235","Muhammad Fadhil Alhakim","if24.muhammadalhakim@mhs.ubpkarawang.ac.id"],
-      ["24416255201056","Muhammad Dzikri Agam Abdul Halim","if24.muhammadhalim@mhs.ubpkarawang.ac.id"],
-      ["24416255201208","Agry Septiani Arifin","if24.agryarifin@mhs.ubpkarawang.ac.id"]
-    ];
-    db.ref('meta/seed_if24a_done').once('value').then(s=>{
-      if(s.val()) return;
-      const updates={};
-      IF24A.forEach(([nim,nama,email])=>{
-        updates['/users/'+nim] = {username:nim, nama, email, password:email, role:'anggota', aktif:true};
-      });
-      db.ref().update(updates).then(()=> db.ref('meta/seed_if24a_done').set(true));
-    });
-
-    // LOGIN (NIM + email)
-    document.getElementById('btnLogin').onclick=()=>{
-      const u = document.getElementById('loginUser').value.trim();
-      const p = document.getElementById('loginPass').value.trim();
+    // login
+    document.getElementById('btnLogin').onclick = ()=>{
+      const u = loginUser.value.trim();
+      const p = loginPass.value.trim();
       if(!u||!p) return toast('warning','Lengkapi username & password');
-
       db.ref('users/'+u).once('value', snap=>{
         if(!snap.exists()) return toast('error','Username tidak ditemukan');
-        const user=snap.val();
-        if(user.password!==p) return toast('error','Password salah');
-        if(user.aktif===false) return toast('error','Akun nonaktif');
+        const user = snap.val();
+        if(user.password !== p) return toast('error','Password salah');
+        if(user.aktif === false) return toast('error','Akun nonaktif');
         localStorage.setItem('activeUser', JSON.stringify(user));
-        toast('success','Login berhasil'); setTimeout(()=>location.href='index.html',350);
+        toast('success','Login berhasil'); 
+        setTimeout(()=>location.href='index.html',350);
       });
     };
 
-    // SIGNUP (opsional)
-    document.getElementById('btnSignup').onclick=()=>{
-      const nama=document.getElementById('regNama').value.trim();
-      const user=document.getElementById('regUser').value.trim();
-      const email=document.getElementById('regEmail').value.trim();
+    // signup
+    document.getElementById('btnSignup').onclick = ()=>{
+      const nama = regNama.value.trim();
+      const user = regUser.value.trim();
+      const email = regEmail.value.trim();
       if(!nama||!user||!email) return toast('warning','Lengkapi semua data');
       db.ref('users/'+user).once('value', s=>{
         if(s.exists()) return toast('error','NIM sudah terdaftar');
         db.ref('users/'+user).set({ nama, username:user, email, password:email, role:'anggota', aktif:true })
-        .then(()=>{ toast('success','Akun dibuat. Silakan login.'); document.querySelector('.tab[data-tab="login"]').click(); });
+        .then(()=>{
+          toast('success','Akun dibuat. Silakan login.');
+          document.querySelector('.tab[data-tab="login"]').click();
+        });
       });
     };
-
-    // 👁️ Fitur lihat/sembunyikan password
-    document.getElementById("toggleLoginPw").onclick = () => {
-      const pass = document.getElementById("loginPass");
-      pass.type = pass.type === "password" ? "text" : "password";
-    };
-    document.getElementById("toggleRegPw").onclick = () => {
-      const pass = document.getElementById("regEmail");
-      pass.type = pass.type === "password" ? "text" : "password";
-    };
   </script>
-
-  <!-- STYLE TAMBAHAN -->
-  <style>
-    .password-wrapper {
-      position: relative;
-    }
-    .password-wrapper input {
-      width: 100%;
-      padding-right: 30px;
-    }
-    .showpw {
-      position: absolute;
-      right: 8px;
-      top: 6px;
-      cursor: pointer;
-      font-size: 16px;
-      opacity: 0.6;
-    }
-    .showpw:hover {
-      opacity: 1;
-    }
-  </style>
 </body>
 </html>
