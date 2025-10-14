@@ -94,21 +94,27 @@ function tambahTransaksi(){
 window.tambahTransaksi = tambahTransaksi;
 
 function renderTable(){
-  const body=document.getElementById('tabelKasBody');
+  const body = document.getElementById('tabelKasBody');
   if(!body) return;
-  body.innerHTML='';
-  dataKas.slice().reverse().forEach(item=>{
-    const tr=document.createElement('tr');
+  body.innerHTML = '';
+  dataKas.slice().reverse().forEach(item => {
+    const tr = document.createElement('tr');
+    const delBtn = (activeUser?.role === 'admin')
+      ? `<button class="btn-delete" onclick="hapusTransaksi('${item.id}')">Hapus</button>`
+      : '';
     tr.innerHTML = `
       <td>${item.tanggal}</td>
       <td>${item.nama}</td>
       <td>${item.tipe}</td>
       <td>${item.kategori}</td>
       <td>${item.ket||'-'}</td>
-      <td>${rupiah(item.jumlah)}</td>`;
+      <td>${rupiah(item.jumlah)}</td>
+      <td>${delBtn}</td>
+    `;
     body.appendChild(tr);
   });
 }
+
 
 /********************
  * QRIS
@@ -273,3 +279,18 @@ function listenPending(){
   // default buka dashboard akan render chart
   renderDashboard();
 })();
+
+function hapusTransaksi(id){
+  if(activeUser?.role !== 'admin'){
+    return alert('Hanya ADMIN yang boleh menghapus.');
+  }
+  if(!confirm('Yakin ingin menghapus transaksi ini?')) return;
+  const tRef = ref(db, 'transaksi/' + id);
+  remove(tRef)
+    .then(()=>alert('Transaksi berhasil dihapus.'))
+    .catch(err=>{
+      console.error(err);
+      alert('Gagal menghapus transaksi.');
+    });
+}
+window.hapusTransaksi = hapusTransaksi;
