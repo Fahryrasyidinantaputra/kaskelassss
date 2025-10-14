@@ -6,160 +6,162 @@
   <title>Kas Kelas UBP — Dashboard</title>
   <link rel="icon" href="assets/logo.png" />
   <link rel="stylesheet" href="style.css" />
-
-  <!-- Libs -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- Firebase v8 -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+  <script src="firebase.js"></script>
 </head>
-<body>
-  <!-- Guard -->
-  <script>
-    const __user = JSON.parse(localStorage.getItem('activeUser')||'null');
-    if(!__user) location.replace('login.html');
-  </script>
 
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <h2>Kas Kelas UBP</h2>
-    <a class="navlink active" data-section="dashboard">🏠 Dashboard</a>
-    <a class="navlink" data-section="transaksi">💰 Transaksi</a>
-    <a class="navlink" data-section="qris">📱 QRIS</a>
-    <a class="navlink" data-section="laporan">📊 Laporan</a>
-    <a class="navlink" data-section="aktivitas">📋 Aktivitas</a>
-    <div class="logout-btn" onclick="logout()">Keluar</div>
-  </aside>
-
-  <!-- Main -->
-  <main class="main">
-    <div class="header-flex">
-      <div>
-        <h1 style="margin:0">Dashboard Kas</h1>
-        <div id="permNote" class="muted">—</div>
-      </div>
-      <div class="header-right">
-        <select id="themePicker" class="theme-picker">
-          <option value="blue" selected>Blue</option>
-          <option value="indigo">Indigo</option>
-          <option value="teal">Teal</option>
-        </select>
-        <div class="user-pill" id="userBadge">—</div>
-      </div>
+<body class="bg">
+  <header class="topbar">
+    <div class="brand">
+      <img src="assets/logo.png" alt="Logo" />
+      <span>Kas Kelas UBP</span>
     </div>
+    <nav class="menu">
+      <a class="active" data-page="transaksi">Transaksi</a>
+      <a data-page="rekap">Rekap</a>
+      <a data-page="anggota">Anggota</a>
+      <a data-page="pengaturan">Pengaturan</a>
+    </nav>
+    <div class="userbox">
+      <span id="whoami">—</span>
+      <button id="logout" class="btn small">Keluar</button>
+    </div>
+  </header>
 
-    <!-- DASHBOARD -->
-    <section id="dashboard" class="section active">
-      <div class="grid-3">
-        <div class="card kpi"><h3>Saldo</h3><div class="val" id="sumSaldo">Rp 0</div></div>
-        <div class="card kpi"><h3>Pemasukan</h3><div class="val" id="sumIn">Rp 0</div></div>
-        <div class="card kpi"><h3>Pengeluaran</h3><div class="val" id="sumOut">Rp 0</div></div>
+  <main class="wrap">
+    <!-- BAR ATAS -->
+    <section class="stats">
+      <div class="stat">
+        <div class="stat-title">Saldo</div>
+        <div class="stat-value" id="saldo">Rp 0</div>
       </div>
-
-      <div class="two-col">
-        <div class="card">
-          <h3 style="margin-bottom:10px">Rasio Pemasukan vs Pengeluaran</h3>
-          <div class="chart-wrap"><canvas id="miniChart"></canvas></div>
-        </div>
-        <div class="card">
-          <h3 style="margin-bottom:10px">Tren Saldo</h3>
-          <div class="chart-wrap" style="height:300px"><canvas id="trendChart"></canvas></div>
-        </div>
+      <div class="stat">
+        <div class="stat-title">Iuran Mingguan</div>
+        <div class="stat-value" id="iuranLabel">Rp 5.000</div>
+      </div>
+      <div class="stat">
+        <div class="stat-title">Minggu Ini</div>
+        <div class="stat-value" id="mingguIni">—</div>
       </div>
     </section>
 
-    <!-- TRANSAKSI -->
-    <section id="transaksi" class="section">
-      <div class="card">
-        <div class="toolbar">
-          <h2 style="margin:0">Transaksi</h2>
-          <div class="grow"></div>
-          <input id="searchBox" placeholder="Cari transaksi..." />
-          <button id="btnExportXls" class="btn btn-secondary">Export Excel</button>
-          <button id="btnExportPdf" class="btn btn-primary">Export PDF</button>
+    <!-- ================== HALAMAN TRANSAKSI ================== -->
+    <section id="page-transaksi" class="page active">
+      <div class="toolbar">
+        <div class="group">
+          <button class="btn primary" id="btnAddCash">+ Setoran Tunai</button>
+          <button class="btn" id="btnAddQRIS">+ Pembayaran via QRIS</button>
+          <button class="btn" id="btnPengeluaran">- Pengeluaran</button>
         </div>
-
-        <div id="formTransaksi" class="form-grid">
-          <input id="nama" placeholder="Nama" />
-          <select id="tipe"><option value="pemasukan">Pemasukan</option><option value="pengeluaran">Pengeluaran</option></select>
-          <select id="kategori">
-            <option>Kas Rutin</option><option>Donasi</option><option>QRIS</option><option>Lainnya</option>
+        <div class="group">
+          <input id="search" class="input" placeholder="Cari nama / catatan..." />
+          <select id="filterRange" class="input">
+            <option value="week">Mingguan</option>
+            <option value="month">Bulanan</option>
+            <option value="year">Tahunan</option>
+            <option value="all">Semua</option>
           </select>
-          <input id="keterangan" placeholder="Keterangan (opsional)" />
-          <input id="jumlah" type="number" min="0" placeholder="Jumlah (Rp)" />
-          <button class="btn btn-primary" type="button" onclick="tambahTransaksi()">Tambah</button>
         </div>
+      </div>
 
-        <div class="table-container">
-          <table class="table">
-            <thead>
-              <tr>
-                <th>Tanggal</th><th>Nama</th><th>Tipe</th><th>Kategori</th><th>Keterangan</th><th>Jumlah</th><th id="aksiHead">Aksi</th>
-              </tr>
-            </thead>
-            <tbody id="tabelKasBody"></tbody>
-          </table>
-        </div>
-
-        <div id="totalKategori" class="muted" style="margin-top:10px"></div>
+      <div class="card">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Tgl</th>
+              <th>Nama</th>
+              <th>Jenis</th>
+              <th>Metode</th>
+              <th>Nominal</th>
+              <th>Catatan</th>
+              <th style="width:120px">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+        <div id="empty" class="empty">Belum ada transaksi.</div>
       </div>
     </section>
 
-    <!-- QRIS -->
-    <section id="qris" class="section">
-      <div class="two-col">
-        <div class="card">
-          <h2 style="margin:0 0 6px">Pembayaran via QRIS</h2>
-          <p class="muted">Upload bukti (opsional) untuk mempercepat verifikasi admin.</p>
-          <div class="form-grid">
-            <input id="qrisNama" placeholder="Nama Pembayar" />
-            <input id="qrisNominal" type="number" min="0" placeholder="Nominal (Rp)" />
-            <input id="qrisKeterangan" placeholder="Keterangan (opsional)" />
-            <input id="qrisBukti" type="file" accept="image/*" />
-            <button class="btn btn-primary" type="button" onclick="ajukanQRIS()">Saya Sudah Bayar</button>
-          </div>
+    <!-- ================== HALAMAN REKAP ================== -->
+    <section id="page-rekap" class="page">
+      <div class="card">
+        <div class="flex gap">
+          <select id="rekapMode" class="input" style="max-width:160px">
+            <option value="week">Mingguan</option>
+            <option value="month">Bulanan</option>
+            <option value="year">Tahunan</option>
+          </select>
+          <input id="rekapDate" type="date" class="input" />
+          <button class="btn" id="btnRefreshRekap">Terapkan</button>
         </div>
-
-        <div class="card">
-          <h3 style="margin:0 0 8px">Menunggu Konfirmasi Admin</h3>
-          <div class="table-container">
-            <table class="table">
-              <thead><tr><th>Nama</th><th>Nominal</th><th>Keterangan</th><th>Bukti</th><th>Status</th><th>Aksi</th></tr></thead>
-              <tbody id="pendingBody"></tbody>
-            </table>
-          </div>
-        </div>
+        <div class="legend">Status per anggota untuk periode terpilih.</div>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Nama</th>
+              <th>Terbayar</th>
+              <th>Sisa</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="tbodyRekap"></tbody>
+        </table>
       </div>
     </section>
 
-    <!-- LAPORAN -->
-    <section id="laporan" class="section">
+    <!-- ================== HALAMAN ANGGOTA ================== -->
+    <section id="page-anggota" class="page">
       <div class="card">
         <div class="toolbar">
-          <h2 style="margin:0">Laporan</h2>
-          <div class="grow"></div>
-          <button id="btnExportXls2" class="btn btn-secondary">Export Excel</button>
-          <button id="btnExportPdf2" class="btn btn-primary">Export PDF</button>
+          <div class="group">
+            <button id="btnTambahAnggota" class="btn">+ Tambah Anggota</button>
+          </div>
+          <div class="group">
+            <input id="cariAnggota" class="input" placeholder="Cari anggota..." />
+          </div>
         </div>
-        <div class="table-container">
-          <table class="table">
-            <thead><tr><th>Tanggal</th><th>Nama</th><th>Kategori</th><th>Pemasukan</th><th>Pengeluaran</th><th>Saldo Hari Itu</th></tr></thead>
-            <tbody id="rekapBody"></tbody>
-          </table>
-        </div>
+        <table class="table">
+          <thead>
+            <tr><th>Username</th><th>Nama</th><th>Role</th><th>Aksi</th></tr>
+          </thead>
+          <tbody id="tbodyAnggota"></tbody>
+        </table>
       </div>
     </section>
 
-    <!-- AKTIVITAS -->
-    <section id="aktivitas" class="section">
-      <div class="card">
-        <h2 style="margin:0 0 10px">Log Aktivitas</h2>
-        <div id="aktivitasList" class="log-list"></div>
+    <!-- ================== HALAMAN PENGATURAN ================== -->
+    <section id="page-pengaturan" class="page">
+      <div class="card small">
+        <h3>Pengaturan Iuran & QRIS</h3>
+        <div class="grid2">
+          <label>Iuran Mingguan (Rp)
+            <input id="setIuran" class="input" type="number" min="0" />
+          </label>
+          <label>Tanggal Mulai Minggu (opsional)
+            <input id="setStart" class="input" type="date" />
+          </label>
+        </div>
+        <div class="flex gap" style="margin-top:8px">
+          <button class="btn primary" id="btnSimpanPengaturan">Simpan</button>
+          <button class="btn" id="btnReloadPengaturan">Muat Ulang</button>
+        </div>
+
+        <div class="hr"></div>
+        <h4>QRIS Kelas (static)</h4>
+        <p class="muted">Sederhana: tampilkan QR statis (mis. QR kas kelas). Siswa scan, lalu bendahara input transaksi dengan “Metode: QRIS” + isi kode referensi (opsional). Tidak perlu upload bukti.</p>
+        <img src="assets/qris.png" alt="QRIS" class="qris" />
       </div>
     </section>
   </main>
 
-  <script src="firebase.js"></script>
+  <footer class="footer">© UBP — Kas Kelas</footer>
+
   <script src="script.js"></script>
 </body>
 </html>
