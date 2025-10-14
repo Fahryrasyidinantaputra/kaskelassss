@@ -35,9 +35,14 @@
       <!-- LOGIN -->
       <form id="loginForm" class="panel active formcol">
         <label>NIM (username)</label>
-        <input id="loginUser" placeholder="24416255xxxxx" />
+        <input id="loginUser" placeholder="NIM anda" />
+
         <label>Password</label>
-        <input id="loginPass" type="password" placeholder="email kampus" />
+        <div class="password-wrapper">
+          <input id="loginPass" type="password" placeholder="email kampus" />
+          <span id="toggleLoginPw" class="showpw">👁</span>
+        </div>
+
         <button type="button" class="btn primary full" id="btnLogin">Masuk</button>
         <small class="muted">Admin: <b>admin</b> / <b>12345</b></small>
       </form>
@@ -46,10 +51,16 @@
       <form id="signupForm" class="panel formcol">
         <label>Nama Lengkap</label>
         <input id="regNama" placeholder="Nama lengkap" />
+
         <label>NIM (username)</label>
-        <input id="regUser" placeholder="24416255xxxxx" />
+        <input id="regUser" placeholder="NIM anda" />
+
         <label>Email Kampus (jadi password awal)</label>
-        <input id="regEmail" placeholder="if24.nama@mhs.ubpkarawang.ac.id" />
+        <div class="password-wrapper">
+          <input id="regEmail" placeholder="email kampus" />
+          <span id="toggleRegPw" class="showpw">👁</span>
+        </div>
+
         <button type="button" class="btn full" id="btnSignup">Daftar Anggota</button>
       </form>
     </div>
@@ -57,6 +68,7 @@
 
   <footer class="footer">© UBP — Kas Kelas IF 24-A</footer>
 
+  <!-- SCRIPT LOGIN -->
   <script>
     const toast = (icon, text) => Swal.fire({icon, text, timer:1400, showConfirmButton:false});
 
@@ -143,6 +155,38 @@
         .then(()=>{ toast('success','Akun dibuat. Silakan login.'); document.querySelector('.tab[data-tab="login"]').click(); });
       });
     };
+
+    // 👁️ Fitur lihat/sembunyikan password
+    document.getElementById("toggleLoginPw").onclick = () => {
+      const pass = document.getElementById("loginPass");
+      pass.type = pass.type === "password" ? "text" : "password";
+    };
+    document.getElementById("toggleRegPw").onclick = () => {
+      const pass = document.getElementById("regEmail");
+      pass.type = pass.type === "password" ? "text" : "password";
+    };
   </script>
+
+  <!-- STYLE TAMBAHAN -->
+  <style>
+    .password-wrapper {
+      position: relative;
+    }
+    .password-wrapper input {
+      width: 100%;
+      padding-right: 30px;
+    }
+    .showpw {
+      position: absolute;
+      right: 8px;
+      top: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      opacity: 0.6;
+    }
+    .showpw:hover {
+      opacity: 1;
+    }
+  </style>
 </body>
 </html>
