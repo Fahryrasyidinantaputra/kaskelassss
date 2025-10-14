@@ -8,6 +8,11 @@
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+  <!-- Export libs -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+
   <!-- Firebase v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -22,6 +27,7 @@
     </div>
     <nav class="menu">
       <a class="active" data-page="transaksi">Transaksi</a>
+      <a data-page="qris">Pengajuan QRIS</a>
       <a data-page="rekap">Rekap</a>
       <a data-page="anggota">Anggota</a>
       <a data-page="pengaturan">Pengaturan</a>
@@ -42,28 +48,31 @@
     <!-- TRANSAKSI -->
     <section id="page-transaksi" class="page active">
       <div class="toolbar">
-        <div class="group">
+        <div class="group" id="adminActions">
           <button class="btn primary" id="btnAddCash">+ Setoran</button>
-          <button class="btn" id="btnAddQRIS">+ QRIS</button>
           <button class="btn" id="btnPengeluaran">- Pengeluaran</button>
         </div>
         <div class="group">
-          <input id="search" class="input" placeholder="Cari nama/catatan..." />
+          <button class="btn" id="btnQRIS">+ QRIS (Ajukan)</button>
+          <input id="search" class="input" placeholder="Cari nama/username/catatan..." />
           <select id="filterRange" class="input">
-            <option value="week">Mingguan</option>
+            <option value="day">Harian</option>
+            <option value="week" selected>Mingguan</option>
             <option value="month">Bulanan</option>
             <option value="year">Tahunan</option>
             <option value="all">Semua</option>
           </select>
+          <button class="btn" id="exportExcel">Excel</button>
+          <button class="btn" id="exportPDF">PDF</button>
         </div>
       </div>
 
       <div class="card">
-        <table class="table">
+        <table class="table" id="tblTransaksi">
           <thead>
             <tr>
               <th>Tanggal</th><th>Nama</th><th>Jenis</th><th>Metode</th>
-              <th class="right">Nominal</th><th>Catatan</th><th style="width:120px">Aksi</th>
+              <th class="right">Nominal</th><th>Catatan</th><th>Status</th><th style="width:120px">Aksi</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
@@ -72,21 +81,34 @@
       </div>
     </section>
 
+    <!-- PENGAJUAN QRIS (untuk ADMIN konfirmasi) -->
+    <section id="page-qris" class="page">
+      <div class="card">
+        <div class="legend">Admin mengonfirmasi pengajuan QRIS dari anggota.</div>
+        <table class="table">
+          <thead><tr><th>Tanggal</th><th>Nama</th><th>Nominal</th><th>Catatan</th><th>Status</th><th>Aksi</th></tr></thead>
+          <tbody id="tbodyQRIS"></tbody>
+        </table>
+      </div>
+    </section>
+
     <!-- REKAP -->
     <section id="page-rekap" class="page">
       <div class="card">
         <div class="flex gap">
           <select id="rekapMode" class="input" style="max-width:160px">
-            <option value="week">Mingguan</option>
+            <option value="day">Harian</option>
+            <option value="week" selected>Mingguan</option>
             <option value="month">Bulanan</option>
             <option value="year">Tahunan</option>
           </select>
           <input id="rekapDate" type="date" class="input" />
           <button class="btn" id="btnRefreshRekap">Terapkan</button>
           <input id="cariNamaRekap" class="input" placeholder="Cari nama..." />
+          <button class="btn" id="exportRekapPDF">PDF</button>
         </div>
         <div class="legend">Status iuran per anggota untuk periode terpilih. Cicilan otomatis terhitung.</div>
-        <table class="table">
+        <table class="table" id="tblRekap">
           <thead><tr><th>Nama</th><th>Terbayar</th><th>Sisa</th><th>Status</th></tr></thead>
           <tbody id="tbodyRekap"></tbody>
         </table>
@@ -97,7 +119,7 @@
     <section id="page-anggota" class="page">
       <div class="card">
         <div class="toolbar">
-          <div class="group"><button id="btnTambahAnggota" class="btn">+ Tambah Anggota</button></div>
+          <div class="group admin-only"><button id="btnTambahAnggota" class="btn">+ Tambah Anggota</button></div>
           <div class="group"><input id="cariAnggota" class="input" placeholder="Cari anggota..." /></div>
         </div>
         <table class="table">
@@ -120,13 +142,13 @@
           </label>
         </div>
         <div class="flex gap" style="margin-top:8px">
-          <button class="btn primary" id="btnSimpanPengaturan">Simpan</button>
+          <button class="btn primary admin-only" id="btnSimpanPengaturan">Simpan</button>
           <button class="btn" id="btnReloadPengaturan">Muat Ulang</button>
         </div>
         <div class="hr"></div>
         <h4>QRIS Kelas (statis)</h4>
-        <p class="muted">Scan QR di bawah, bendahara input transaksi “Metode: QRIS”. Tidak perlu upload bukti.</p>
-        <img src="assets/qris.png" alt="QRIS" class="qris" />
+        <p class="muted">Scan QR berikut lalu ajukan pembayaran dari tombol “+ QRIS (Ajukan)” di halaman Transaksi.</p>
+        <img src="assets/qris.jpg" alt="QRIS" class="qris" />
       </div>
     </section>
   </main>
