@@ -1,4 +1,4 @@
-// Firebase v8 (kompatibel GitHub Pages)
+// Firebase v8 – kompatibel GitHub Pages
 const firebaseConfig = {
   apiKey: "AIzaSyCv-ki8V75XjFZ-6E9S2Q49SLsVKh5YtKg",
   authDomain: "kaskelasa-e9c8b.firebaseapp.com",
