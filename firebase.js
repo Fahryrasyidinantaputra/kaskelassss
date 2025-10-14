@@ -1,9 +1,9 @@
 <!-- FIREBASE.JS -->
 <script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js"></script>
-<script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js"></script>
+
 <script>
-  // KONEKSI FIREBASE (Realtime Database + Storage)
+  // 🔗 KONEKSI FIREBASE
   const firebaseConfig = {
     apiKey: "AIzaSyCv-ki8V75XjFZ-6E9S2Q49SLsVKh5YtKg",
     authDomain: "kaskelasa-e9c8b.firebaseapp.com",
@@ -16,5 +16,4 @@
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
-  const storage = firebase.storage();
 </script>
