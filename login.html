@@ -4,278 +4,109 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Kas Kelas UBP — Login</title>
-
-  <!-- Favicon dan CSS -->
-  <link rel="icon" href="assets/Screenshot 2025-10-13 200531.png" />
+  <link rel="icon" href="assets/logo.png" />
   <link rel="stylesheet" href="style.css" />
-
-  <!-- SweetAlert2 (untuk notifikasi popup) -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-</head>
 
-<body class="login-page">
-
-  <div class="login-card card fade-in">
-    <img src="assets/Screenshot 2025-10-13 200531.png" alt="Logo" class="login-logo" />
-    <h2>Kas Kelas UBP</h2>
-    <p class="muted" style="margin-top:-6px">Dashboard kas kelas modern & real-time</p>
-
-    <div class="tabs">
-      <button class="tab active" data-tab="login">Login</button>
-      <button class="tab" data-tab="signup">Daftar</button>
-    </div>
-
-    <!-- FORM LOGIN -->
-    <form id="loginForm" class="panel active">
-      <label>Username</label>
-      <input id="loginUser" placeholder="admin / username" />
-      <label>Password</label>
-      <input id="loginPass" type="password" placeholder="••••••" />
-      <button type="button" class="btn btn-primary" id="btnLogin">Masuk</button>
-    </form>
-
-    <!-- FORM DAFTAR -->
-    <form id="signupForm" class="panel">
-      <label>Nama Lengkap</label>
-      <input id="regNama" placeholder="Nama lengkap" />
-      <label>Username</label>
-      <input id="regUser" placeholder="username unik" />
-      <label>Password</label>
-      <input id="regPass" type="password" placeholder="min 4 karakter" />
-      <button type="button" class="btn btn-secondary" id="btnSignup">Daftar Anggota</button>
-    </form>
-  </div>
-
-  <!-- ========================================================= -->
-  <!--          FIREBASE CONFIG (versi 8 agar tidak error)        -->
-  <!-- ========================================================= -->
+  <!-- Firebase v8 (harus sebelum firebase.js) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+  <script src="firebase.js"></script>
+</head>
+
+<body class="bg">
+  <header class="topbar">
+    <div class="brand">
+      <img src="assets/logo.png" alt="Logo" />
+      <span>Kas Kelas UBP</span>
+    </div>
+  </header>
+
+  <main class="center">
+    <div class="card login-card">
+      <h2>Masuk / Daftar</h2>
+      <p class="muted">Dashboard kas kelas modern & real-time</p>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="login">Login</button>
+        <button class="tab" data-tab="signup">Daftar</button>
+      </div>
+
+      <!-- LOGIN -->
+      <form id="loginForm" class="panel active">
+        <label>Username</label>
+        <input id="loginUser" placeholder="admin / username" />
+        <label>Password</label>
+        <input id="loginPass" type="password" placeholder="••••••" />
+        <button type="button" class="btn primary" id="btnLogin">Masuk</button>
+      </form>
+
+      <!-- SIGN UP -->
+      <form id="signupForm" class="panel">
+        <label>Nama Lengkap</label>
+        <input id="regNama" placeholder="Nama lengkap" />
+        <label>Username</label>
+        <input id="regUser" placeholder="username unik" />
+        <label>Password</label>
+        <input id="regPass" type="password" placeholder="min 4 karakter" />
+        <button type="button" class="btn" id="btnSignup">Daftar Anggota</button>
+      </form>
+    </div>
+  </main>
+
+  <footer class="footer">© UBP — Kas Kelas</footer>
 
   <script>
-    // Konfigurasi Firebase kamu
-    const firebaseConfig = {
-      apiKey: "AIzaSyCv-ki8V75XjFZ-6E9S2Q49SLsVKh5YtKg",
-      authDomain: "kaskelasa-e9c8b.firebaseapp.com",
-      databaseURL: "https://kaskelasa-e9c8b-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "kaskelasa-e9c8b",
-      storageBucket: "kaskelasa-e9c8b.appspot.com",
-      messagingSenderId: "20448185139",
-      appId: "1:20448185139:web:99a5d1c81c1a61650e4c46"
-    };
+    const toast = (icon, text) => Swal.fire({icon, text, timer:1400, showConfirmButton:false});
 
-    // Inisialisasi Firebase
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const storage = firebase.storage();
-  </script>
-
-  <!-- ========================================================= -->
-  <!--              LOGIC LOGIN DAN REGISTER                     -->
-  <!-- ========================================================= -->
-  <script>
-    // Fungsi berpindah tab login/daftar
-    document.querySelectorAll('.tab').forEach(b => {
-      b.onclick = () => {
-        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    // Tabs
+    document.querySelectorAll('.tab').forEach(b=>{
+      b.onclick=()=>{
+        document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
         b.classList.add('active');
-        document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
-        document.getElementById(b.dataset.tab === 'login' ? 'loginForm' : 'signupForm').classList.add('active');
+        document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+        document.getElementById(b.dataset.tab==='login'?'loginForm':'signupForm').classList.add('active');
       };
     });
 
-    const toast = (icon, text) =>
-      Swal.fire({ icon, text, timer: 1400, showConfirmButton: false });
-
-    // Buat akun admin default (jika belum ada)
-    db.ref('users/admin').once('value', s => {
-      if (!s.exists()) {
-        db.ref('users/admin').set({
-          nama: 'Administrator',
-          username: 'admin',
-          password: '12345',
-          role: 'admin'
-        });
+    // Seed admin jika belum ada
+    db.ref('users/admin').once('value', s=>{
+      if(!s.exists()){
+        db.ref('users/admin').set({ nama:'Administrator', username:'admin', password:'12345', role:'admin', aktif:true });
       }
     });
 
     // LOGIN
-    document.getElementById('btnLogin').onclick = () => {
+    document.getElementById('btnLogin').onclick=()=>{
       const u = document.getElementById('loginUser').value.trim();
       const p = document.getElementById('loginPass').value.trim();
-      if (!u || !p)
-        return toast('warning', 'Lengkapi username & password');
+      if(!u||!p) return toast('warning','Lengkapi username & password');
 
-      db.ref('users/' + u).once('value', snap => {
-        if (!snap.exists()) return toast('error', 'Username tidak ditemukan');
+      db.ref('users/'+u).once('value', snap=>{
+        if(!snap.exists()) return toast('error','Username tidak ditemukan');
         const user = snap.val();
-        if (user.password !== p) return toast('error', 'Password salah');
+        if(user.password!==p) return toast('error','Password salah');
+        if(user.aktif===false) return toast('error','Akun nonaktif');
 
         localStorage.setItem('activeUser', JSON.stringify(user));
-        toast('success', 'Login berhasil');
-        setTimeout(() => location.href = 'index.html', 400);
+        toast('success','Login berhasil');
+        setTimeout(()=>location.href='index.html',350);
       });
     };
 
     // SIGNUP
-    document.getElementById('btnSignup').onclick = () => {
-      const nama = document.getElementById('regNama').value.trim();
-      const user = document.getElementById('regUser').value.trim();
-      const pass = document.getElementById('regPass').value.trim();
+    document.getElementById('btnSignup').onclick=()=>{
+      const nama=document.getElementById('regNama').value.trim();
+      const user=document.getElementById('regUser').value.trim();
+      const pass=document.getElementById('regPass').value.trim();
+      if(!nama||!user||!pass) return toast('warning','Lengkapi semua data');
+      if(pass.length<4) return toast('warning','Password minimal 4 karakter');
 
-      if (!nama || !user || !pass)
-        return toast('warning', 'Lengkapi semua data');
-      if (pass.length < 4)
-        return toast('warning', 'Password minimal 4 karakter');
-
-      db.ref('users/' + user).once('value', s => {
-        if (s.exists()) return toast('error', 'Username sudah dipakai');
-        db.ref('users/' + user).set({
-          nama,
-          username: user,
-          password: pass,
-          role: 'anggota'
-        }).then(() => {
-          toast('success', 'Akun dibuat. Silakan login.');
-          document.querySelector('.tab[data-tab="login"]').click();
-        });
-      });
-    };
-  </script>
-
-</body>
-</html>
-
-  <link rel="stylesheet" href="style.css" />
-
-  <!-- SweetAlert2 (untuk popup notifikasi) -->
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-</head>
-
-<body class="login-page">
-
-  <!-- Kartu login -->
-  <div class="login-card card fade-in">
-    <img src="assets/logo.png" alt="Logo" class="login-logo" />
-    <h2>Kas Kelas UBP</h2>
-    <p class="muted" style="margin-top:-6px">Dashboard kas kelas modern & real-time</p>
-
-    <!-- Tab Login/Daftar -->
-    <div class="tabs">
-      <button class="tab active" data-tab="login">Login</button>
-      <button class="tab" data-tab="signup">Daftar</button>
-    </div>
-
-    <!-- FORM LOGIN -->
-    <form id="loginForm" class="panel active">
-      <label>Username</label>
-      <input id="loginUser" placeholder="admin / username" />
-      <label>Password</label>
-      <input id="loginPass" type="password" placeholder="••••••" />
-      <button type="button" class="btn btn-primary" id="btnLogin">Masuk</button>
-    </form>
-
-    <!-- FORM DAFTAR -->
-    <form id="signupForm" class="panel">
-      <label>Nama Lengkap</label>
-      <input id="regNama" placeholder="Nama lengkap" />
-      <label>Username</label>
-      <input id="regUser" placeholder="username unik" />
-      <label>Password</label>
-      <input id="regPass" type="password" placeholder="min 4 karakter" />
-      <button type="button" class="btn btn-secondary" id="btnSignup">Daftar Anggota</button>
-    </form>
-  </div>
-
-  <!-- ========================================================= -->
-  <!--               FIREBASE SETUP (urutan WAJIB benar)         -->
-  <!-- ========================================================= -->
-
-  <!-- Firebase SDK (wajib di-load dulu sebelum firebase.js) -->
-  <script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js"></script>
-
-  <!-- File konfigurasi Firebase kamu -->
-  <script src="firebase.js"></script>
-
-  <!-- ========================================================= -->
-  <!--               SCRIPT LOGIN / DAFTAR                       -->
-  <!-- ========================================================= -->
-
-  <script>
-    // --- Tabs untuk berpindah antara Login & Daftar ---
-    document.querySelectorAll('.tab').forEach(b => {
-      b.onclick = () => {
-        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-        b.classList.add('active');
-        document.querySelectorAll('.panel').forEach(x => x.classList.remove('active'));
-        document.getElementById(b.dataset.tab === 'login' ? 'loginForm' : 'signupForm').classList.add('active');
-      }
-    });
-
-    // --- Notifikasi cepat ---
-    const toast = (icon, text) => Swal.fire({
-      icon, text, timer: 1400, showConfirmButton: false
-    });
-
-    // --- Seed akun admin (otomatis dibuat sekali saja) ---
-    db.ref('users/admin').once('value', s => {
-      if (!s.exists()) {
-        db.ref('users/admin').set({
-          nama: 'Administrator',
-          username: 'admin',
-          password: '12345',
-          role: 'admin'
-        });
-      }
-    });
-
-    // --- LOGIN ---
-    document.getElementById('btnLogin').onclick = () => {
-      const u = document.getElementById('loginUser').value.trim();
-      const p = document.getElementById('loginPass').value.trim();
-
-      if (!u || !p)
-        return toast('warning', 'Lengkapi username & password');
-
-      db.ref('users/' + u).once('value', snap => {
-        if (!snap.exists()) return toast('error', 'Username tidak ditemukan');
-
-        const user = snap.val();
-        if (user.password !== p) return toast('error', 'Password salah');
-
-        localStorage.setItem('activeUser', JSON.stringify(user));
-        toast('success', 'Login berhasil');
-        setTimeout(() => location.href = 'index.html', 350);
-      });
-    };
-
-    // --- SIGNUP ---
-    document.getElementById('btnSignup').onclick = () => {
-      const nama = document.getElementById('regNama').value.trim();
-      const user = document.getElementById('regUser').value.trim();
-      const pass = document.getElementById('regPass').value.trim();
-
-      if (!nama || !user || !pass)
-        return toast('warning', 'Lengkapi semua data');
-
-      if (pass.length < 4)
-        return toast('warning', 'Password minimal 4 karakter');
-
-      db.ref('users/' + user).once('value', s => {
-        if (s.exists()) return toast('error', 'Username sudah dipakai');
-
-        db.ref('users/' + user).set({
-          nama,
-          username: user,
-          password: pass,
-          role: 'anggota'
-        }).then(() => {
-          toast('success', 'Akun dibuat. Silakan login.');
-          document.querySelector('.tab[data-tab="login"]').click();
-        });
+      db.ref('users/'+user).once('value', s=>{
+        if(s.exists()) return toast('error','Username sudah dipakai');
+        db.ref('users/'+user).set({ nama, username:user, password:pass, role:'anggota', aktif:true })
+        .then(()=>{ toast('success','Akun dibuat. Silakan login.'); document.querySelector('.tab[data-tab="login"]').click(); });
       });
     };
   </script>
