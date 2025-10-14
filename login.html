@@ -27,28 +27,28 @@
       <h2>Masuk / Daftar</h2>
       <p class="muted">Dashboard kas kelas modern & real-time</p>
 
-      <div class="tabs">
+      <div class="tabs" style="margin-bottom:8px">
         <button class="tab active" data-tab="login">Login</button>
         <button class="tab" data-tab="signup">Daftar</button>
       </div>
 
       <!-- LOGIN -->
       <form id="loginForm" class="panel active formcol">
-        <label for="loginUser">NIM (username)</label>
+        <label>NIM (username)</label>
         <input id="loginUser" placeholder="24416255xxxxx" />
-        <label for="loginPass">Password</label>
+        <label>Password</label>
         <input id="loginPass" type="password" placeholder="email kampus" />
         <button type="button" class="btn primary full" id="btnLogin">Masuk</button>
         <small class="muted">Admin: <b>admin</b> / <b>12345</b></small>
       </form>
 
-      <!-- SIGN UP -->
+      <!-- SIGNUP -->
       <form id="signupForm" class="panel formcol">
-        <label for="regNama">Nama Lengkap</label>
+        <label>Nama Lengkap</label>
         <input id="regNama" placeholder="Nama lengkap" />
-        <label for="regUser">NIM (username)</label>
+        <label>NIM (username)</label>
         <input id="regUser" placeholder="24416255xxxxx" />
-        <label for="regEmail">Email Kampus (jadi password awal)</label>
+        <label>Email Kampus (jadi password awal)</label>
         <input id="regEmail" placeholder="if24.nama@mhs.ubpkarawang.ac.id" />
         <button type="button" class="btn full" id="btnSignup">Daftar Anggota</button>
       </form>
@@ -77,7 +77,7 @@
       }
     });
 
-    // ===== Auto-seed 26 anggota IF 24-A (sekali saja) =====
+    // Seed IF 24-A (sekali saja)
     const IF24A = [
       ["24416255201207","Habiburrohman Azzami","if24.habiburrohmanazzami@mhs.ubpkarawang.ac.id"],
       ["24416255201205","Tiara Putri Aulia","if24.tiaraaulia@mhs.ubpkarawang.ac.id"],
@@ -106,17 +106,16 @@
       ["24416255201056","Muhammad Dzikri Agam Abdul Halim","if24.muhammadhalim@mhs.ubpkarawang.ac.id"],
       ["24416255201208","Agry Septiani Arifin","if24.agryarifin@mhs.ubpkarawang.ac.id"]
     ];
-
     db.ref('meta/seed_if24a_done').once('value').then(s=>{
-      if(s.val()) return; // sudah pernah seed
-      const updates = {};
+      if(s.val()) return;
+      const updates={};
       IF24A.forEach(([nim,nama,email])=>{
-        updates['/users/'+nim] = { nama, username:nim, email, password:email, role:'anggota', aktif:true };
+        updates['/users/'+nim] = {username:nim, nama, email, password:email, role:'anggota', aktif:true};
       });
       db.ref().update(updates).then(()=> db.ref('meta/seed_if24a_done').set(true));
     });
 
-    // LOGIN (username=NIM, password=email)
+    // LOGIN (NIM + email)
     document.getElementById('btnLogin').onclick=()=>{
       const u = document.getElementById('loginUser').value.trim();
       const p = document.getElementById('loginPass').value.trim();
@@ -124,23 +123,20 @@
 
       db.ref('users/'+u).once('value', snap=>{
         if(!snap.exists()) return toast('error','Username tidak ditemukan');
-        const user = snap.val();
+        const user=snap.val();
         if(user.password!==p) return toast('error','Password salah');
         if(user.aktif===false) return toast('error','Akun nonaktif');
-
         localStorage.setItem('activeUser', JSON.stringify(user));
-        toast('success','Login berhasil');
-        setTimeout(()=>location.href='index.html',350);
+        toast('success','Login berhasil'); setTimeout(()=>location.href='index.html',350);
       });
     };
 
-    // DAFTAR (username=NIM, password=email)
+    // SIGNUP (opsional)
     document.getElementById('btnSignup').onclick=()=>{
       const nama=document.getElementById('regNama').value.trim();
       const user=document.getElementById('regUser').value.trim();
       const email=document.getElementById('regEmail').value.trim();
       if(!nama||!user||!email) return toast('warning','Lengkapi semua data');
-
       db.ref('users/'+user).once('value', s=>{
         if(s.exists()) return toast('error','NIM sudah terdaftar');
         db.ref('users/'+user).set({ nama, username:user, email, password:email, role:'anggota', aktif:true })
