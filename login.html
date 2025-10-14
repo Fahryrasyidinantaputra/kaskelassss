@@ -3,23 +3,22 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Kas Kelas UBP — Login</title>
+  <title>Kas Kelas IF 24-A — Login</title>
   <link rel="icon" href="assets/logo.png" />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-  <!-- Firebase v8 (harus sebelum firebase.js) -->
+  <!-- Firebase v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
   <script src="firebase.js"></script>
 </head>
-
 <body class="bg">
   <header class="topbar">
     <div class="brand">
       <img src="assets/logo.png" alt="Logo" />
-      <span>Kas Kelas UBP</span>
+      <span>Kas Kelas IF 24-A — UBP Karawang</span>
     </div>
   </header>
 
@@ -34,28 +33,29 @@
       </div>
 
       <!-- LOGIN -->
-      <form id="loginForm" class="panel active">
-        <label>Username</label>
-        <input id="loginUser" placeholder="admin / username" />
-        <label>Password</label>
-        <input id="loginPass" type="password" placeholder="••••••" />
-        <button type="button" class="btn primary" id="btnLogin">Masuk</button>
+      <form id="loginForm" class="panel active formcol">
+        <label for="loginUser">NIM (username)</label>
+        <input id="loginUser" placeholder="24416255xxxxx" />
+        <label for="loginPass">Password</label>
+        <input id="loginPass" type="password" placeholder="email kampus" />
+        <button type="button" class="btn primary full" id="btnLogin">Masuk</button>
+        <small class="muted">Admin: <b>admin</b> / <b>12345</b></small>
       </form>
 
       <!-- SIGN UP -->
-      <form id="signupForm" class="panel">
-        <label>Nama Lengkap</label>
+      <form id="signupForm" class="panel formcol">
+        <label for="regNama">Nama Lengkap</label>
         <input id="regNama" placeholder="Nama lengkap" />
-        <label>Username</label>
-        <input id="regUser" placeholder="username unik" />
-        <label>Password</label>
-        <input id="regPass" type="password" placeholder="min 4 karakter" />
-        <button type="button" class="btn" id="btnSignup">Daftar Anggota</button>
+        <label for="regUser">NIM (username)</label>
+        <input id="regUser" placeholder="24416255xxxxx" />
+        <label for="regEmail">Email Kampus (jadi password awal)</label>
+        <input id="regEmail" placeholder="if24.nama@mhs.ubpkarawang.ac.id" />
+        <button type="button" class="btn full" id="btnSignup">Daftar Anggota</button>
       </form>
     </div>
   </main>
 
-  <footer class="footer">© UBP — Kas Kelas</footer>
+  <footer class="footer">© UBP — Kas Kelas IF 24-A</footer>
 
   <script>
     const toast = (icon, text) => Swal.fire({icon, text, timer:1400, showConfirmButton:false});
@@ -70,14 +70,53 @@
       };
     });
 
-    // Seed admin jika belum ada
+    // Seed ADMIN
     db.ref('users/admin').once('value', s=>{
       if(!s.exists()){
         db.ref('users/admin').set({ nama:'Administrator', username:'admin', password:'12345', role:'admin', aktif:true });
       }
     });
 
-    // LOGIN
+    // ===== Auto-seed 26 anggota IF 24-A (sekali saja) =====
+    const IF24A = [
+      ["24416255201207","Habiburrohman Azzami","if24.habiburrohmanazzami@mhs.ubpkarawang.ac.id"],
+      ["24416255201205","Tiara Putri Aulia","if24.tiaraaulia@mhs.ubpkarawang.ac.id"],
+      ["24416255201133","Rakha Rafid Fahrezi","if24.rakhafahrezi@mhs.ubpkarawang.ac.id"],
+      ["24416255201004","Indah Rahmawati","if24.indahrahmawati@mhs.ubpkarawang.ac.id"],
+      ["24416255201204","Anwar Ramadhan","if24.anwarramadhan@mhs.ubpkarawang.ac.id"],
+      ["24416255201068","Agga Pratama Putra","if24.anggaputra@mhs.ubpkarawang.ac.id"],
+      ["24416255201209","Rio Rasyha Syadzily","if24.riosyadzily@mhs.ubpkarawang.ac.id"],
+      ["24416255201010","Mohamad Hilmy Haidar","if24.mohamadhaidar@mhs.ubpkarawang.ac.id"],
+      ["24416255201237","Dimaz Wahyudy","if24.dimazwahyudy@mhs.ubpkarawang.ac.id"],
+      ["24416255201215","Suci Nur Saffrilia Dewi","if24.sucidewi@mhs.ubpkarawang.ac.id"],
+      ["24416255201230","Fairuz Putra Sema","if24.fairuzsema@mhs.ubpkarawang.ac.id"],
+      ["24416255201124","Septian Eka Putra","if24.septianputra@mhs.ubpkarawang.ac.id"],
+      ["24416255201110","Daffa Andhika Pratama","if24.daffapratama@mhs.ubpkarawang.ac.id"],
+      ["24416255201213","Aan Ripandi","if24.aanripandi@mhs.ubpkarawang.ac.id"],
+      ["24416255201075","Ahmad Arifin","if24.ahmadarifin@mhs.ubpkarawang.ac.id"],
+      ["24416255201212","Alfi Latifatul Munawaroh","if24.alfilatifatul@mhs.ubpkarawang.ac.id"],
+      ["24416255201115","Nur Mukhlisin","if24.nurmukhlisin@mhs.ubpkarawang.ac.id"],
+      ["24416255201123","Dannys Panji Kurniawan","if24.dannyskurniawan@mhs.ubpkarawang.ac.id"],
+      ["24416255201032","Alyaluna Sasmita","if24.alyalunasasmita@mhs.ubpkarawang.ac.id"],
+      ["24416255201233","Muhammad Hilal Al Mufid","if24.muhammadmufid@mhs.ubpkarawang.ac.id"],
+      ["24416255201203","Fahry Rasyidinanta Putra","if24.fahryputra@mhs.ubpkarawang.ac.id"],
+      ["24416255201211","Sekar Listyana Kartika","if24.sekarkartika@mhs.ubpkarawang.ac.id"],
+      ["24416255201043","Atila Faturrahman Pratama","if24.atilapratama@mhs.ubpkarawang.ac.id"],
+      ["24416255201235","Muhammad Fadhil Alhakim","if24.muhammadalhakim@mhs.ubpkarawang.ac.id"],
+      ["24416255201056","Muhammad Dzikri Agam Abdul Halim","if24.muhammadhalim@mhs.ubpkarawang.ac.id"],
+      ["24416255201208","Agry Septiani Arifin","if24.agryarifin@mhs.ubpkarawang.ac.id"]
+    ];
+
+    db.ref('meta/seed_if24a_done').once('value').then(s=>{
+      if(s.val()) return; // sudah pernah seed
+      const updates = {};
+      IF24A.forEach(([nim,nama,email])=>{
+        updates['/users/'+nim] = { nama, username:nim, email, password:email, role:'anggota', aktif:true };
+      });
+      db.ref().update(updates).then(()=> db.ref('meta/seed_if24a_done').set(true));
+    });
+
+    // LOGIN (username=NIM, password=email)
     document.getElementById('btnLogin').onclick=()=>{
       const u = document.getElementById('loginUser').value.trim();
       const p = document.getElementById('loginPass').value.trim();
@@ -95,17 +134,16 @@
       });
     };
 
-    // SIGNUP
+    // DAFTAR (username=NIM, password=email)
     document.getElementById('btnSignup').onclick=()=>{
       const nama=document.getElementById('regNama').value.trim();
       const user=document.getElementById('regUser').value.trim();
-      const pass=document.getElementById('regPass').value.trim();
-      if(!nama||!user||!pass) return toast('warning','Lengkapi semua data');
-      if(pass.length<4) return toast('warning','Password minimal 4 karakter');
+      const email=document.getElementById('regEmail').value.trim();
+      if(!nama||!user||!email) return toast('warning','Lengkapi semua data');
 
       db.ref('users/'+user).once('value', s=>{
-        if(s.exists()) return toast('error','Username sudah dipakai');
-        db.ref('users/'+user).set({ nama, username:user, password:pass, role:'anggota', aktif:true })
+        if(s.exists()) return toast('error','NIM sudah terdaftar');
+        db.ref('users/'+user).set({ nama, username:user, email, password:email, role:'anggota', aktif:true })
         .then(()=>{ toast('success','Akun dibuat. Silakan login.'); document.querySelector('.tab[data-tab="login"]').click(); });
       });
     };
