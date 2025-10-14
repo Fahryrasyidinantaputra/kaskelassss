@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Kas Kelas UBP — Dashboard</title>
+  <title>Kas Kelas IF 24-A — Dashboard</title>
   <link rel="icon" href="assets/logo.png" />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -14,12 +14,11 @@
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
   <script src="firebase.js"></script>
 </head>
-
 <body class="bg">
   <header class="topbar">
     <div class="brand">
       <img src="assets/logo.png" alt="Logo" />
-      <span>Kas Kelas UBP</span>
+      <span>Kas Kelas IF 24-A — UBP Karawang</span>
     </div>
     <nav class="menu">
       <a class="active" data-page="transaksi">Transaksi</a>
@@ -34,32 +33,22 @@
   </header>
 
   <main class="wrap">
-    <!-- BAR ATAS -->
     <section class="stats">
-      <div class="stat">
-        <div class="stat-title">Saldo</div>
-        <div class="stat-value" id="saldo">Rp 0</div>
-      </div>
-      <div class="stat">
-        <div class="stat-title">Iuran Mingguan</div>
-        <div class="stat-value" id="iuranLabel">Rp 5.000</div>
-      </div>
-      <div class="stat">
-        <div class="stat-title">Minggu Ini</div>
-        <div class="stat-value" id="mingguIni">—</div>
-      </div>
+      <div class="stat"><div class="stat-title">Saldo</div><div class="stat-value" id="saldo">Rp 0</div></div>
+      <div class="stat"><div class="stat-title">Iuran Mingguan</div><div class="stat-value" id="iuranLabel">Rp 5.000</div></div>
+      <div class="stat"><div class="stat-title">Minggu Ini</div><div class="stat-value" id="mingguIni">—</div></div>
     </section>
 
-    <!-- ================== HALAMAN TRANSAKSI ================== -->
+    <!-- TRANSAKSI -->
     <section id="page-transaksi" class="page active">
       <div class="toolbar">
         <div class="group">
-          <button class="btn primary" id="btnAddCash">+ Setoran Tunai</button>
-          <button class="btn" id="btnAddQRIS">+ Pembayaran via QRIS</button>
+          <button class="btn primary" id="btnAddCash">+ Setoran</button>
+          <button class="btn" id="btnAddQRIS">+ QRIS</button>
           <button class="btn" id="btnPengeluaran">- Pengeluaran</button>
         </div>
         <div class="group">
-          <input id="search" class="input" placeholder="Cari nama / catatan..." />
+          <input id="search" class="input" placeholder="Cari nama/catatan..." />
           <select id="filterRange" class="input">
             <option value="week">Mingguan</option>
             <option value="month">Bulanan</option>
@@ -73,13 +62,8 @@
         <table class="table">
           <thead>
             <tr>
-              <th>Tgl</th>
-              <th>Nama</th>
-              <th>Jenis</th>
-              <th>Metode</th>
-              <th>Nominal</th>
-              <th>Catatan</th>
-              <th style="width:120px">Aksi</th>
+              <th>Tanggal</th><th>Nama</th><th>Jenis</th><th>Metode</th>
+              <th class="right">Nominal</th><th>Catatan</th><th style="width:120px">Aksi</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
@@ -88,7 +72,7 @@
       </div>
     </section>
 
-    <!-- ================== HALAMAN REKAP ================== -->
+    <!-- REKAP -->
     <section id="page-rekap" class="page">
       <div class="card">
         <div class="flex gap">
@@ -99,43 +83,31 @@
           </select>
           <input id="rekapDate" type="date" class="input" />
           <button class="btn" id="btnRefreshRekap">Terapkan</button>
+          <input id="cariNamaRekap" class="input" placeholder="Cari nama..." />
         </div>
-        <div class="legend">Status per anggota untuk periode terpilih.</div>
+        <div class="legend">Status iuran per anggota untuk periode terpilih. Cicilan otomatis terhitung.</div>
         <table class="table">
-          <thead>
-            <tr>
-              <th>Nama</th>
-              <th>Terbayar</th>
-              <th>Sisa</th>
-              <th>Status</th>
-            </tr>
-          </thead>
+          <thead><tr><th>Nama</th><th>Terbayar</th><th>Sisa</th><th>Status</th></tr></thead>
           <tbody id="tbodyRekap"></tbody>
         </table>
       </div>
     </section>
 
-    <!-- ================== HALAMAN ANGGOTA ================== -->
+    <!-- ANGGOTA -->
     <section id="page-anggota" class="page">
       <div class="card">
         <div class="toolbar">
-          <div class="group">
-            <button id="btnTambahAnggota" class="btn">+ Tambah Anggota</button>
-          </div>
-          <div class="group">
-            <input id="cariAnggota" class="input" placeholder="Cari anggota..." />
-          </div>
+          <div class="group"><button id="btnTambahAnggota" class="btn">+ Tambah Anggota</button></div>
+          <div class="group"><input id="cariAnggota" class="input" placeholder="Cari anggota..." /></div>
         </div>
         <table class="table">
-          <thead>
-            <tr><th>Username</th><th>Nama</th><th>Role</th><th>Aksi</th></tr>
-          </thead>
+          <thead><tr><th>NIM</th><th>Nama</th><th>Email</th><th>Role</th><th>Aksi</th></tr></thead>
           <tbody id="tbodyAnggota"></tbody>
         </table>
       </div>
     </section>
 
-    <!-- ================== HALAMAN PENGATURAN ================== -->
+    <!-- PENGATURAN -->
     <section id="page-pengaturan" class="page">
       <div class="card small">
         <h3>Pengaturan Iuran & QRIS</h3>
@@ -151,17 +123,15 @@
           <button class="btn primary" id="btnSimpanPengaturan">Simpan</button>
           <button class="btn" id="btnReloadPengaturan">Muat Ulang</button>
         </div>
-
         <div class="hr"></div>
-        <h4>QRIS Kelas (static)</h4>
-        <p class="muted">Sederhana: tampilkan QR statis (mis. QR kas kelas). Siswa scan, lalu bendahara input transaksi dengan “Metode: QRIS” + isi kode referensi (opsional). Tidak perlu upload bukti.</p>
+        <h4>QRIS Kelas (statis)</h4>
+        <p class="muted">Scan QR di bawah, bendahara input transaksi “Metode: QRIS”. Tidak perlu upload bukti.</p>
         <img src="assets/qris.png" alt="QRIS" class="qris" />
       </div>
     </section>
   </main>
 
-  <footer class="footer">© UBP — Kas Kelas</footer>
-
+  <footer class="footer">© UBP — Kas Kelas IF 24-A</footer>
   <script src="script.js"></script>
 </body>
 </html>
