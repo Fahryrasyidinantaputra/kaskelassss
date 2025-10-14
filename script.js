@@ -61,10 +61,10 @@ function login() {
 }
 
 function logout(){
-  activeUser=null;
-  saveActive();
-  overlay.style.display='flex';
+  localStorage.removeItem('kk_active_user');
+  location.href='login.html';
 }
+
 
 /********************
  * UTILITAS
