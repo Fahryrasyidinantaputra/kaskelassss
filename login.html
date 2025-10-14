@@ -1,98 +1,92 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kas Kelas UBP - Login</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Kas Kelas UBP — Login</title>
+  <link rel="icon" href="assets/logo.png" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body class="login-page">
-  <div class="login-container">
-    <img src="assets/logo.png" class="login-logo" alt="Logo">
-    <h2>Kas Kelas UBP</h2>
 
-    <div class="tab-group">
-      <button class="tab-btn active" data-tab="login">Login</button>
-      <button class="tab-btn" data-tab="daftar">Daftar</button>
+  <div class="login-card card fade-in">
+    <img src="assets/logo.png" alt="Logo" class="login-logo" />
+    <h2>Kas Kelas UBP</h2>
+    <p class="muted" style="margin-top:-6px">Dashboard kas kelas modern & real-time</p>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="login">Login</button>
+      <button class="tab" data-tab="signup">Daftar</button>
     </div>
 
-    <!-- LOGIN -->
-    <form id="form-login" class="active">
+    <form id="loginForm" class="panel active">
       <label>Username</label>
-      <input type="text" id="loginUser" placeholder="Username">
+      <input id="loginUser" placeholder="admin / username" />
       <label>Password</label>
-      <input type="password" id="loginPass" placeholder="Password">
-      <button type="button" class="btn-primary" onclick="login()">Masuk</button>
+      <input id="loginPass" type="password" placeholder="••••••" />
+      <button type="button" class="btn btn-primary" id="btnLogin">Masuk</button>
     </form>
 
-    <!-- DAFTAR -->
-    <form id="form-daftar">
+    <form id="signupForm" class="panel">
       <label>Nama Lengkap</label>
-      <input type="text" id="regNama" placeholder="Nama Lengkap">
+      <input id="regNama" placeholder="Nama lengkap" />
       <label>Username</label>
-      <input type="text" id="regUser" placeholder="Username">
+      <input id="regUser" placeholder="username unik" />
       <label>Password</label>
-      <input type="password" id="regPass" placeholder="Password">
-      <button type="button" class="btn-secondary" onclick="daftar()">Daftar</button>
+      <input id="regPass" type="password" placeholder="min 4 karakter" />
+      <button type="button" class="btn btn-secondary" id="btnSignup">Daftar Anggota</button>
     </form>
   </div>
 
   <script src="firebase.js"></script>
   <script>
-  document.querySelectorAll('.tab-btn').forEach(btn=>{
-    btn.onclick=()=>{
-      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-      document.querySelectorAll('form').forEach(f=>f.classList.remove('active'));
-      document.getElementById('form-'+btn.dataset.tab).classList.add('active');
-    };
-  });
-
-  // Default admin
-  db.ref('users/admin').once('value', snap=>{
-    if(!snap.exists()){
-      db.ref('users/admin').set({ nama:'Administrator', username:'admin', password:'12345', role:'admin' });
-    }
-  });
-
-  function login(){
-    const user=document.getElementById('loginUser').value.trim();
-    const pass=document.getElementById('loginPass').value.trim();
-    if(!user||!pass) return alert('Isi username dan password.');
-
-    db.ref('users/'+user).once('value', snap=>{
-      if(!snap.exists()) return alert('Username tidak ditemukan!');
-      const data=snap.val();
-      if(data.password!==pass) return alert('Password salah!');
-      localStorage.setItem('activeUser', JSON.stringify(data));
-      location.href='index.html';
+    // Tabs
+    document.querySelectorAll('.tab').forEach(b=>{
+      b.onclick=()=>{
+        document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));
+        document.getElementById(b.dataset.tab==='login'?'loginForm':'signupForm').classList.add('active');
+      }
     });
-  }
 
-  function daftar(){
-    const nama=document.getElementById('regNama').value.trim();
-    const user=document.getElementById('regUser').value.trim();
-    const pass=document.getElementById('regPass').value.trim();
-    if(!nama||!user||!pass) return alert('Lengkapi semua data.');
+    // Seed admin (sekali, jika belum ada)
+    db.ref('users/admin').once('value', s=>{
+      if(!s.exists()){
+        db.ref('users/admin').set({ nama:'Administrator', username:'admin', password:'12345', role:'admin' });
+      }
+    });
 
-    db.ref('users/'+user).once('value', snap=>{
-      if(snap.exists()) return alert('Username sudah digunakan.');
-      db.ref('users/'+user).set({ nama, username:user, password:pass, role:'anggota' })
-      .then(()=>{
-        alert('Pendaftaran berhasil! Silakan login.');
-        document.querySelector('[data-tab="login"]').click();
+    const toast = (icon,text)=>Swal.fire({icon,text,timer:1400,showConfirmButton:false});
+
+    // Login
+    document.getElementById('btnLogin').onclick=()=>{
+      const u = document.getElementById('loginUser').value.trim();
+      const p = document.getElementById('loginPass').value.trim();
+      if(!u||!p) return toast('warning','Lengkapi username & password');
+      db.ref('users/'+u).once('value', snap=>{
+        if(!snap.exists()) return toast('error','Username tidak ditemukan');
+        const user=snap.val();
+        if(user.password!==p) return toast('error','Password salah');
+        localStorage.setItem('activeUser', JSON.stringify(user));
+        toast('success','Login berhasil'); setTimeout(()=>location.href='index.html',350);
       });
-    });
-  }
-    <script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js"></script>
-<script>
-  const firebaseConfig = { ... };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
-</script>
+    };
 
-
+    // Signup
+    document.getElementById('btnSignup').onclick=()=>{
+      const nama=document.getElementById('regNama').value.trim();
+      const user=document.getElementById('regUser').value.trim();
+      const pass=document.getElementById('regPass').value.trim();
+      if(!nama||!user||!pass) return toast('warning','Lengkapi semua data');
+      if(pass.length<4) return toast('warning','Password minimal 4 karakter');
+      db.ref('users/'+user).once('value', s=>{
+        if(s.exists()) return toast('error','Username sudah dipakai');
+        db.ref('users/'+user).set({ nama, username:user, password:pass, role:'anggota' })
+        .then(()=>{ toast('success','Akun dibuat. Silakan login.'); document.querySelector('.tab[data-tab="login"]').click(); });
+      });
+    };
   </script>
 </body>
 </html>
