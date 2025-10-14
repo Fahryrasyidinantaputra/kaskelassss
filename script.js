@@ -194,26 +194,36 @@ function renderPendingQRIS(){
   });
 }
 
-function konfirmasiQRIS(id){
-  const target = pendingQRIS.find(x=>x.id===id);
-  if(!target)return;
-  if(activeUser?.role!=='admin')return alert('Hanya admin yang bisa konfirmasi.');
+function konfirmasiQRIS(id) {
+  if (!confirm("Yakin ingin konfirmasi pembayaran ini?")) return;
 
-  // Update status
-  const qref = ref(db, 'qris/'+id);
-  update(qref, { status:'LUNAS' });
+  const pembayaran = pendingQRISList.find(item => item.id === id);
+  if (!pembayaran) return alert("Data tidak ditemukan.");
 
-  // Catat jadi pemasukan otomatis
-  const tRef = ref(db, 'transaksi/');
-  push(tRef, {
+  // Tambahkan ke transaksi Firebase
+  const transaksiRef = ref(db, 'transaksi/');
+  push(transaksiRef, {
     tanggal: todayStr(),
-    nama: target.nama,
+    nama: pembayaran.nama,
     tipe: 'pemasukan',
     kategori: 'QRIS',
-    ket: target.ket || 'Pembayaran via DANA',
-    jumlah: target.nominal,
-    source: 'DANA'
+    ket: pembayaran.ket || 'Pembayaran via QRIS',
+    jumlah: pembayaran.nominal,
+    source: 'QRIS'
   });
+
+  // Hapus dari pending
+  const pendingRef = ref(db, 'pending_qris/' + id);
+  remove(pendingRef)
+    .then(() => {
+      alert("✅ Pembayaran berhasil dikonfirmasi!");
+    })
+    .catch((err) => {
+      console.error(err);
+      alert("Gagal menghapus data pending.");
+    });
+}
+
 
   alert('QRIS dikonfirmasi & tercatat sebagai pemasukan.');
 }
@@ -329,6 +339,17 @@ function loadDataFirebase() {
     renderPendingQRIS();
   });
 }
+function loadPendingQRIS() {
+  const qrisRef = ref(db, 'pending_qris/');
+  onValue(qrisRef, (snapshot) => {
+    const data = snapshot.val();
+    pendingQRISList = [];
+    if (data) {
+      pendingQRISList = Object.entries(data).map(([id, val]) => ({ id, ...val }));
+    }
+    renderPendingQRIS();
+  });
+}
 
 /********************
  * INIT
@@ -336,7 +357,8 @@ function loadDataFirebase() {
 function initUIAfterLogin(){
   overlay.style.display='none';
   applyRoleUI();
-  loadDataFirebase(); // realtime sync
+  loadDataFirebase();
+  loadPendingQRIS();// realtime sync
 }
 
 // Ekspor fungsi ke window agar bisa dipanggil dari HTML (onclick)
