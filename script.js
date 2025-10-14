@@ -1,4 +1,4 @@
-// ========= util & UI =========
+/* ========= util & UI ========= */
 const $  = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const fmt = n => new Intl.NumberFormat('id-ID').format(n);
@@ -6,13 +6,21 @@ const money = n => `Rp ${fmt(Number(n||0))}`;
 const toast = (icon, text) => Swal.fire({icon, text, timer:1400, showConfirmButton:false});
 const confirmBox = (title, text) => Swal.fire({icon:'question', title, text, showCancelButton:true, confirmButtonText:'Ya', cancelButtonText:'Batal'});
 
-// ========= auth =========
+/* ========= auth ========= */
 const me = JSON.parse(localStorage.getItem('activeUser') || 'null');
 if (!me) location.href = 'login.html';
 $('#whoami').textContent = `${me?.nama || me?.username}`;
 $('#logout').onclick = ()=>{ localStorage.removeItem('activeUser'); location.href='login.html'; };
 
-// ========= nav =========
+/* ========= role-based UI ========= */
+const isAdmin = (me?.role === 'admin');
+if(!isAdmin){
+  // sembunyikan kontrol admin
+  $('#adminActions')?.remove();
+  $$('.admin-only').forEach(el=>el.remove());
+}
+
+/* ========= nav ========= */
 $$('.menu a').forEach(a=>{
   a.onclick=()=>{
     $$('.menu a').forEach(x=>x.classList.remove('active'));
@@ -22,23 +30,24 @@ $$('.menu a').forEach(a=>{
   };
 });
 
-// ========= state =========
+/* ========= state ========= */
 let IURAN = DEFAULT_IURAN;
 let START_WEEK = null;
 let users = {};
-let transaksi = {};
+let transaksi = {}; // semua transaksi (setoran/pengeluaran/qris{pending|approved|rejected})
 
 const todayISO = () => new Date().toISOString().slice(0,10);
+function startOfDay(d){ const dt=new Date(d); dt.setHours(0,0,0,0); return dt; }
+function endOfDay(d){ const dt=new Date(d); dt.setHours(23,59,59,999); return dt; }
 function startOfWeek(d){ const dt=new Date(d); const day=dt.getDay(); const diff=(day===0?-6:1)-day; dt.setDate(dt.getDate()+diff); dt.setHours(0,0,0,0); return dt; }
 function endOfWeek(d){ const s=startOfWeek(d); const e=new Date(s); e.setDate(s.getDate()+6); e.setHours(23,59,59,999); return e; }
 function startOfMonth(d){ const dt=new Date(d); dt.setDate(1); dt.setHours(0,0,0,0); return dt; }
 function endOfMonth(d){ const dt=new Date(d); dt.setMonth(dt.getMonth()+1,0); dt.setHours(23,59,59,999); return dt; }
 function startOfYear(d){ const dt=new Date(d); dt.setMonth(0,1); dt.setHours(0,0,0,0); return dt; }
 function endOfYear(d){ const dt=new Date(d); dt.setMonth(11,31); dt.setHours(23,59,59,999); return dt; }
-
 $('#mingguIni').textContent = `${startOfWeek(new Date()).toLocaleDateString('id-ID')} – ${endOfWeek(new Date()).toLocaleDateString('id-ID')}`;
 
-// ========= settings =========
+/* ========= settings ========= */
 function loadSettings(){
   return db.ref('settings').once('value').then(s=>{
     const v=s.val()||{};
@@ -49,22 +58,23 @@ function loadSettings(){
     $('#setStart').value = START_WEEK || '';
   });
 }
-$('#btnSimpanPengaturan').onclick=()=>{
+$('#btnSimpanPengaturan')?.addEventListener('click', ()=>{
   const i = Number($('#setIuran').value||0);
   const st = $('#setStart').value||null;
   db.ref('settings').set({iuran:i, start_week:st}).then(()=>{ toast('success','Disimpan'); loadSettings(); renderAll(); });
-};
-$('#btnReloadPengaturan').onclick=()=>loadSettings();
+});
+$('#btnReloadPengaturan')?.addEventListener('click', ()=>loadSettings());
 
-// ========= users =========
+/* ========= users ========= */
 function loadUsers(){
   return db.ref('users').once('value').then(s=>{ users = s.val()||{}; renderAnggota(); });
 }
 function renderAnggota(){
   const q = ($('#cariAnggota').value||'').toLowerCase();
-  const tbody = $('#tbodyAnggota'); tbody.innerHTML='';
+  const tbody = $('#tbodyAnggota'); if(!tbody) return;
+  tbody.innerHTML='';
   Object.values(users).filter(u=>u.role!=='admin')
-    .filter(u=>!q || u.nama.toLowerCase().includes(q) || (u.username||'').includes(q))
+    .filter(u=>!q || u.nama.toLowerCase().includes(q) || (u.username||'').toLowerCase().includes(q))
     .sort((a,b)=> (a.nama>b.nama?1:-1))
     .forEach(u=>{
       const tr=document.createElement('tr');
@@ -74,9 +84,13 @@ function renderAnggota(){
         <td>${u.email || '-'}</td>
         <td><span class="badge">${u.role||'anggota'}</span></td>
         <td>
-          <button class="btn small" data-act="reset" data-id="${u.username}">Reset PW</button>
-          <button class="btn small" data-act="toggle" data-id="${u.username}">${u.aktif===false?'Aktifkan':'Nonaktifkan'}</button>
-          <button class="btn small danger" data-act="hapus" data-id="${u.username}">Hapus</button>
+          ${isAdmin ? `
+            <button class="btn small" data-act="reset" data-id="${u.username}">Reset PW</button>
+            <button class="btn small" data-act="toggle" data-id="${u.username}">${u.aktif===false?'Aktifkan':'Nonaktifkan'}</button>
+            <button class="btn small danger" data-act="hapus" data-id="${u.username}">Hapus</button>
+          ` : `
+            ${me.username===u.username ? `<button class="btn small" data-act="pw" data-id="${u.username}">Ganti Password</button>` : ''}
+          `}
         </td>`;
       tbody.appendChild(tr);
     });
@@ -84,10 +98,16 @@ function renderAnggota(){
   tbody.onclick=(e)=>{
     const b=e.target.closest('button'); if(!b) return;
     const id=b.dataset.id, act=b.dataset.act;
+    if(act==='pw'){
+      Swal.fire({title:'Ganti Password', input:'text', inputPlaceholder:'password baru', showCancelButton:true})
+      .then(r=>{ if(!r.value) return; db.ref('users/'+id+'/password').set(r.value).then(()=>toast('success','Password diperbarui')); });
+      return;
+    }
+    if(!isAdmin) return;
     if(act==='reset'){
       const email = users[id]?.email||'';
       if(!email) return toast('error','Email kosong');
-      db.ref('users/'+id+'/password').set(email).then(()=>toast('success','Password = email diset ulang'));
+      db.ref('users/'+id+'/password').set(email).then(()=>toast('success','Password = email (reset)'));
     }else if(act==='toggle'){
       const now = users[id].aktif===false ? true:false;
       db.ref('users/'+id+'/aktif').set(now).then(()=>{ toast('success','Status diubah'); loadUsers(); });
@@ -98,49 +118,48 @@ function renderAnggota(){
     }
   };
 }
-$('#cariAnggota').oninput=renderAnggota;
-$('#btnTambahAnggota').onclick=()=>{
-  Swal.fire({
-    title:'Tambah Anggota',
-    html:`<input id="nim" class="swal2-input" placeholder="NIM">
-          <input id="nama" class="swal2-input" placeholder="Nama">
-          <input id="email" class="swal2-input" placeholder="Email (juga jadi password)">`,
-    preConfirm:()=>{
-      const nim=$('#nim').value.trim(), nama=$('#nama').value.trim(), email=$('#email').value.trim();
-      if(!nim||!nama||!email){ Swal.showValidationMessage('Lengkapi semua'); return false; }
-      return {nim,nama,email};
-    },
-    showCancelButton:true
-  }).then(r=>{
-    if(!r.value) return;
-    db.ref('users/'+r.value.nim).once('value').then(s=>{
-      if(s.exists()) return toast('error','NIM sudah ada');
-      db.ref('users/'+r.value.nim).set({username:r.value.nim, nama:r.value.nama, email:r.value.email, password:r.value.email, role:'anggota', aktif:true})
-        .then(()=>{ toast('success','Ditambahkan'); loadUsers(); });
-    });
-  });
-};
+$('#cariAnggota')?.addEventListener('input', renderAnggota);
 
-// ========= transaksi =========
+/* ========= transaksi ========= */
 function transaksiArray(){ return Object.entries(transaksi).map(([id,t])=>({id,...t})).sort((a,b)=> (a.tanggal>b.tanggal?-1:1)); }
+
+function getPeriodRange(mode, baseDate){
+  const d = new Date(baseDate||new Date());
+  if(mode==='day') return [startOfDay(d), endOfDay(d)];
+  if(mode==='week') return [startOfWeek(d), endOfWeek(d)];
+  if(mode==='month') return [startOfMonth(d), endOfMonth(d)];
+  if(mode==='year') return [startOfYear(d), endOfYear(d)];
+  return [new Date(0), new Date(8640000000000000)];
+}
 
 function renderTransaksi(){
   const q = ($('#search').value||'').toLowerCase();
   const mode = $('#filterRange').value;
-  const now = new Date();
+  const [start, end] = getPeriodRange(mode, new Date());
   let arr = transaksiArray();
 
-  let start=null,end=null;
-  if(mode==='week'){ start=startOfWeek(now); end=endOfWeek(now); }
-  if(mode==='month'){ start=startOfMonth(now); end=endOfMonth(now); }
-  if(mode==='year'){ start=startOfYear(now); end=endOfYear(now); }
-  if(mode!=='all'){ arr = arr.filter(t=>{ const d=new Date(t.tanggal); return d>=start && d<=end; }); }
+  arr = arr.filter(t=>{
+    const d = new Date(t.tanggal);
+    return (mode==='all' || (d>=start && d<=end));
+  });
 
-  if(q) arr = arr.filter(t=> (t.nama||'').toLowerCase().includes(q) || (t.catatan||'').toLowerCase().includes(q));
+  if(q){
+    arr = arr.filter(t=>{
+      return (t.nama||'').toLowerCase().includes(q) ||
+             (t.username||'').toLowerCase().includes(q) ||
+             (t.catatan||'').toLowerCase().includes(q);
+    });
+  }
 
   const tbody = $('#tbody'); tbody.innerHTML=''; let has=false;
   arr.forEach(t=>{
     has=true;
+    const statusBadge = t.jenis==='qris'
+      ? (t.status==='approved' ? '<span class="badge success">approved</span>' :
+         t.status==='rejected' ? '<span class="badge danger">rejected</span>' :
+         '<span class="badge warn">pending</span>')
+      : '-';
+
     const tr=document.createElement('tr');
     tr.innerHTML=`
       <td>${new Date(t.tanggal).toLocaleDateString('id-ID')}</td>
@@ -149,16 +168,23 @@ function renderTransaksi(){
       <td>${t.metode||'-'}</td>
       <td class="right">${money(t.nominal)}</td>
       <td>${t.catatan||''}</td>
+      <td>${statusBadge}</td>
       <td>
-        <button class="btn small" data-edit="${t.id}">Edit</button>
-        <button class="btn small danger" data-del="${t.id}">Hapus</button>
+        ${isAdmin && t.status!=='pending' ? `<button class="btn small" data-edit="${t.id}">Edit</button>` : ''}
+        ${isAdmin ? `<button class="btn small danger" data-del="${t.id}">Hapus</button>` : ''}
       </td>`;
     tbody.appendChild(tr);
   });
   $('#empty').style.display = has?'none':'block';
 
-  // saldo total
-  let s=0; transaksiArray().forEach(t=> s += (t.jenis==='setoran'?1:-1)*Number(t.nominal||0));
+  // saldo total (hanya approved + setoran/pengeluaran)
+  let s=0;
+  transaksiArray().forEach(t=>{
+    const masuk = (t.jenis==='setoran') || (t.jenis==='qris' && t.status==='approved');
+    const keluar = (t.jenis==='pengeluaran');
+    if(masuk) s += Number(t.nominal||0);
+    if(keluar) s -= Number(t.nominal||0);
+  });
   $('#saldo').textContent = money(s);
 
   tbody.onclick=(e)=>{
@@ -170,16 +196,16 @@ function renderTransaksi(){
 $('#search').oninput=renderTransaksi;
 $('#filterRange').onchange=renderTransaksi;
 
+/* editor transaksi (admin only) */
 function baseTransaksi(t={}){ const today=todayISO(); return {
-  tanggal: t.tanggal||today, username:t.username||'', nama:t.nama||'', jenis:t.jenis||'setoran', metode:t.metode||'tunai', nominal:Number(t.nominal||IURAN), catatan:t.catatan||''
+  tanggal: t.tanggal||today, username:t.username||'', nama:t.nama||'', jenis:t.jenis||'setoran',
+  metode:t.metode||'tunai', nominal:Number(t.nominal||IURAN), catatan:t.catatan||'', status:t.status||undefined
 }; }
-
 function openEditor(id){
-  const isEdit=!!id;
-  const data=isEdit?baseTransaksi(transaksi[id]):baseTransaksi();
+  if(!isAdmin) return;
+  const isEdit=!!id; const data=isEdit?baseTransaksi(transaksi[id]):baseTransaksi();
   const options = Object.values(users).filter(u=>u.role!=='admin' && u.aktif!==false)
     .map(u=>`<option value="${u.username}" ${u.username===data.username?'selected':''}>${u.nama} (${u.username})</option>`).join('');
-
   Swal.fire({
     title:isEdit?'Edit Transaksi':'Tambah Transaksi',
     html:`<div class="formgrid">
@@ -195,8 +221,7 @@ function openEditor(id){
       </select></label>
       <label>Nominal (Rp)<input id="f_nom" type="number" class="swal2-input" min="0" value="${data.nominal}"></label>
       <label>Catatan<input id="f_cat" class="swal2-input" value="${data.catatan}"></label>
-    </div>
-    <div class="muted" style="margin-top:6px">QRIS: scan QR statis, isi nominal & (opsional) kode referensi di catatan.</div>`,
+    </div>`,
     width:650, showCancelButton:true, confirmButtonText:isEdit?'Simpan':'Tambah',
     preConfirm:()=>{
       const tgl=$('#f_tgl').value, uname=$('#f_user').value, jenis=$('#f_jenis').value, metode=$('#f_metode').value, nominal=Number($('#f_nom').value||0), catatan=$('#f_cat').value.trim();
@@ -211,37 +236,119 @@ function openEditor(id){
   });
 }
 function deleteTransaksi(id){
+  if(!isAdmin) return;
   confirmBox('Hapus transaksi?','Tindakan ini tidak bisa dibatalkan.').then(res=>{
     if(res.isConfirmed) db.ref('transaksi/'+id).remove().then(()=>toast('success','Dihapus'));
   });
 }
-$('#btnAddCash').onclick = ()=>openEditor();
-$('#btnAddQRIS').onclick = ()=>openEditor();
-$('#btnPengeluaran').onclick = ()=>{ openEditor(); setTimeout(()=>{ $('#f_jenis').value='pengeluaran'; $('#f_metode').value='tunai'; },50); };
+$('#btnAddCash')?.addEventListener('click', ()=>openEditor());
+$('#btnPengeluaran')?.addEventListener('click', ()=>{ openEditor(); setTimeout(()=>{ $('#f_jenis').value='pengeluaran'; $('#f_metode').value='tunai'; },50); });
 
-// ========= rekap =========
+/* ========= QRIS: ajukan (anggota) ========= */
+$('#btnQRIS')?.addEventListener('click', ()=>{
+  Swal.fire({
+    title:'Ajukan Pembayaran QRIS',
+    html: `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <img src="assets/qris.jpg" alt="QRIS" style="width:100%;border-radius:12px;border:1px dashed #d5dbff;padding:6px;background:#fafbff" />
+          <div class="muted" style="margin-top:6px">Scan QR lalu isi nominal & keterangan.</div>
+        </div>
+        <div>
+          <label>Nama</label>
+          <input id="q_nama" class="swal2-input" value="${me.nama||me.username}" disabled>
+          <label>Nominal (Rp)</label>
+          <input id="q_nom" class="swal2-input" type="number" min="1000" value="${IURAN}">
+          <label>Keterangan</label>
+          <input id="q_cat" class="swal2-input" placeholder="misal: bayar minggu ke-3">
+        </div>
+      </div>
+    `,
+    width:760, showCancelButton:true, confirmButtonText:'Ajukan Pembayaran',
+    preConfirm:()=>{
+      const nominal = Number($('#q_nom').value||0);
+      const catatan = ($('#q_cat').value||'').trim();
+      if(nominal<=0){ Swal.showValidationMessage('Nominal harus lebih dari 0'); return false; }
+      return { nominal, catatan };
+    }
+  }).then(r=>{
+    if(!r.value) return;
+    const payload = {
+      id: db.ref('transaksi').push().key,
+      tanggal: todayISO(),
+      username: me.username,
+      nama: me.nama || me.username,
+      jenis: 'qris',
+      metode: 'QRIS',
+      nominal: r.value.nominal,
+      catatan: r.value.catatan,
+      status: 'pending'
+    };
+    db.ref('transaksi/'+payload.id).set(payload).then(()=> toast('success','Pengajuan dikirim. Menunggu konfirmasi admin.'));
+  });
+});
+
+/* ========= QRIS: konfirmasi admin ========= */
+function renderQRISPending(){
+  const tbody = $('#tbodyQRIS'); if(!tbody) return;
+  tbody.innerHTML='';
+  transaksiArray().filter(t=>t.jenis==='qris' && t.status==='pending').forEach(t=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML = `
+      <td>${new Date(t.tanggal).toLocaleDateString('id-ID')}</td>
+      <td>${t.nama}</td>
+      <td class="right">${money(t.nominal)}</td>
+      <td>${t.catatan||''}</td>
+      <td><span class="badge warn">pending</span></td>
+      <td>
+        ${isAdmin ? `
+          <button class="btn small" data-approve="${t.id}">Konfirmasi</button>
+          <button class="btn small danger" data-reject="${t.id}">Tolak</button>
+        ` : '-'}
+      </td>`;
+    tbody.appendChild(tr);
+  });
+
+  tbody.onclick=(e)=>{
+    const a=e.target.closest('button[data-approve]'); const r=e.target.closest('button[data-reject]');
+    if(!isAdmin) return;
+    if(a){
+      const id=a.dataset.approve;
+      db.ref('transaksi/'+id+'/status').set('approved').then(()=>toast('success','QRIS disetujui'));
+    }else if(r){
+      const id=r.dataset.reject;
+      db.ref('transaksi/'+id+'/status').set('rejected').then(()=>toast('success','QRIS ditolak'));
+    }
+  };
+}
+
+/* ========= rekap ========= */
 function sumByUserInRange(uname, start, end){
   let sum=0;
   transaksiArray().forEach(t=>{
-    if(t.username!==uname) return; const d=new Date(t.tanggal);
-    if(d>=start && d<=end && t.jenis==='setoran') sum += Number(t.nominal||0);
+    if(t.username!==uname) return;
+    const d=new Date(t.tanggal);
+    const masuk = (t.jenis==='setoran') || (t.jenis==='qris' && t.status==='approved');
+    if(d>=start && d<=end && masuk) sum += Number(t.nominal||0);
   });
   return sum;
 }
 function periodRange(mode, iso){
   const d=new Date(iso||todayISO());
+  if(mode==='day') return [startOfDay(d), endOfDay(d)];
   if(mode==='week') return [startOfWeek(d), endOfWeek(d)];
   if(mode==='month') return [startOfMonth(d), endOfMonth(d)];
   if(mode==='year') return [startOfYear(d), endOfYear(d)];
   return [startOfWeek(d), endOfWeek(d)];
 }
 function renderRekap(){
-  const mode=$('#rekapMode').value, date=$('#rekapDate').value||todayISO();
+  const mode=$('#rekapMode').value;
+  const date=$('#rekapDate').value||todayISO();
   const [start,end]=periodRange(mode,date);
   const q = ($('#cariNamaRekap').value||'').toLowerCase();
   const tbody=$('#tbodyRekap'); tbody.innerHTML='';
   Object.values(users).filter(u=>u.role!=='admin' && u.aktif!==false)
-    .filter(u=>!q || u.nama.toLowerCase().includes(q) || (u.username||'').includes(q))
+    .filter(u=>!q || u.nama.toLowerCase().includes(q) || (u.username||'').toLowerCase().includes(q))
     .sort((a,b)=> (a.nama>b.nama?1:-1))
     .forEach(u=>{
       const paid = sumByUserInRange(u.username, start, end);
@@ -257,10 +364,46 @@ $('#rekapDate').onchange=renderRekap;
 $('#btnRefreshRekap').onclick=renderRekap;
 $('#cariNamaRekap').oninput=renderRekap;
 
-function renderAll(){ $('#iuranLabel').textContent = money(IURAN); renderRekap(); }
+/* ========= export ========= */
+$('#exportExcel').onclick = ()=>{
+  const rows = [['Tanggal','Nama','Jenis','Metode','Nominal','Catatan','Status']];
+  transaksiArray().forEach(t=>{
+    rows.push([t.tanggal, t.nama, t.jenis, t.metode||'-', t.nominal, t.catatan||'', t.status||'']);
+  });
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb, ws, 'Transaksi');
+  XLSX.writeFile(wb, 'transaksi_kas_if24a.xlsx');
+};
 
-// ========= init =========
+$('#exportPDF').onclick = ()=>{
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.text('Transaksi Kas IF 24-A', 14, 14);
+  const rows = transaksiArray().map(t=>[
+    new Date(t.tanggal).toLocaleDateString('id-ID'), t.nama, t.jenis, t.metode||'-', money(t.nominal), t.catatan||'', t.status||''
+  ]);
+  doc.autoTable({ head:[['Tanggal','Nama','Jenis','Metode','Nominal','Catatan','Status']], body: rows, startY: 20 });
+  doc.save('transaksi_kas_if24a.pdf');
+};
+
+$('#exportRekapPDF').onclick = ()=>{
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.text('Rekap Iuran IF 24-A', 14, 14);
+  const body = Array.from($('#tbodyRekap').children).map(tr=>{
+    const tds = tr.querySelectorAll('td'); return [tds[0].innerText, tds[1].innerText, tds[2].innerText, tds[3].innerText];
+  });
+  doc.autoTable({ head:[['Nama','Terbayar','Sisa','Status']], body, startY: 20 });
+  doc.save('rekap_kas_if24a.pdf');
+};
+
+/* ========= global render ========= */
+function renderAll(){ $('#iuranLabel').textContent = money(IURAN); renderRekap(); }
+function renderEverything(){ renderTransaksi(); renderQRISPending(); renderAll(); }
+
+/* ========= init ========= */
 Promise.all([loadSettings(), loadUsers()]).then(()=>{
-  db.ref('transaksi').on('value', s=>{ transaksi=s.val()||{}; renderTransaksi(); renderAll(); });
-  renderTransaksi(); renderRekap();
+  db.ref('transaksi').on('value', s=>{ transaksi=s.val()||{}; renderEverything(); });
+  renderEverything();
 });
