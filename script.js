@@ -413,8 +413,11 @@ $('#btnResetAll')?.addEventListener('click', ()=>{
 });
 
 /* ========= Init ========= */
+$('#btnRefreshRekap')?.addEventListener('click', renderRekap);
+
 Promise.all([loadSettings(), loadUsers()]).then(()=>{
   populateMonthYearSelects();
   db.ref('transaksi').on('value', s=>{ transaksi=s.val()||{}; renderTransaksi(); renderQRISPending(); renderRekap(); });
   renderTransaksi(); renderQRISPending(); renderRekap();
 });
+
