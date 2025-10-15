@@ -54,50 +54,54 @@ body.bg{background:var(--bg);margin:0;font-family:Poppins,system-ui,-apple-syste
   .grid2{grid-template-columns:1fr}
 }
 
-/* ==== Responsif (Mobile Friendly) ==== */
+/* === RESPONSIVE FIX FOR MOBILE === */
 @media (max-width: 600px) {
-  .toolbar, .group {
+  body {
+    font-size: 14px;
+    overflow-x: hidden;
+  }
+  header.topbar {
     flex-direction: column;
-    gap: 6px;
+    align-items: start;
+    padding: 10px;
   }
-  .toolbar .input, .toolbar .btn {
-    width: 100%;
-  }
-  .anggota-header {
+  .menu {
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 6px;
   }
-  .anggota-header h3 {
-    margin-bottom: 5px;
+  .menu a {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+  .stats {
+    flex-direction: column;
+    gap: 10px;
   }
   .table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 14px;
   }
   .table thead {
     display: none;
   }
   .table tr {
     display: block;
-    margin-bottom: 10px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 10px;
     background: #fff;
+    margin-bottom: 10px;
+    border-radius: 10px;
     box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    padding: 8px;
   }
   .table td {
     display: flex;
     justify-content: space-between;
-    padding: 6px 8px;
-    font-size: 14px;
+    padding: 6px;
   }
   .table td::before {
     content: attr(data-label);
-    font-weight: 600;
+    font-weight: bold;
     color: #333;
   }
 }
