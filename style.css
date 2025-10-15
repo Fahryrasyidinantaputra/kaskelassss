@@ -53,35 +53,3 @@ body.bg{background:var(--bg);margin:0;font-family:Poppins,system-ui,-apple-syste
   .stats{grid-template-columns:1fr}
   .grid2{grid-template-columns:1fr}
 }
-
-/* ======= RESPONSIVE TABLE FIX ======= */
-.card {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left !important;
-}
-
-.table th, .table td {
-  padding: 8px 10px;
-  text-align: left !important;
-  white-space: nowrap;
-}
-
-@media (max-width: 768px) {
-  .table {
-    font-size: 13px;
-    min-width: 650px;
-  }
-  .toolbar, .flex {
-    flex-wrap: wrap;
-  }
-  .input, select, button {
-    width: 100%;
-    margin-top: 6px;
-  }
-}
