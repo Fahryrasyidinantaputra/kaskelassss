@@ -397,6 +397,11 @@ Promise.all([loadSettings(), loadUsers()]).then(()=>{
   renderTransaksi(); renderQRISPending(); renderRekap();
 });
 
+// === Biar pencarian real-time seperti transaksi ===
+$('#cariAnggota')?.addEventListener('input', renderAnggota);
+$('#cariNamaRekap')?.addEventListener('input', renderRekap);
+
+
 /* === TAMBAH ANGGOTA (ADMIN) === */
 $('#btnTambahAnggota')?.addEventListener('click', ()=>{
   if (!isAdmin) {
