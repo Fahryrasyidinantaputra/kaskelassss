@@ -421,3 +421,53 @@ Promise.all([loadSettings(), loadUsers()]).then(()=>{
   renderTransaksi(); renderQRISPending(); renderRekap();
 });
 
+// === TAMBAH ANGGOTA (khusus admin) ===
+$('#btnTambahAnggota')?.addEventListener('click', ()=>{
+  if (!isAdmin) {
+    return Swal.fire('Akses Ditolak', 'Hanya admin yang bisa menambah anggota.', 'error');
+  }
+
+  Swal.fire({
+    title: 'Tambah Anggota Baru',
+    html: `
+      <label>Nama Lengkap</label>
+      <input id="addNama" class="swal2-input" placeholder="Nama lengkap">
+      <label>NIM (username)</label>
+      <input id="addUser" class="swal2-input" placeholder="24416255xxxxx">
+      <label>Email Kampus (password awal)</label>
+      <input id="addEmail" class="swal2-input" placeholder="if24.nama@mhs.ubpkarawang.ac.id">
+    `,
+    showCancelButton: true,
+    confirmButtonText: 'Tambah',
+    preConfirm: () => {
+      const nama = document.getElementById('addNama').value.trim();
+      const username = document.getElementById('addUser').value.trim();
+      const email = document.getElementById('addEmail').value.trim();
+      if (!nama || !username || !email) {
+        Swal.showValidationMessage('Semua field wajib diisi');
+        return false;
+      }
+      return { nama, username, email };
+    }
+  }).then(result => {
+    if (!result.value) return;
+    const { nama, username, email } = result.value;
+    db.ref('users/' + username).once('value', snap => {
+      if (snap.exists()) {
+        return Swal.fire('Gagal', 'NIM sudah terdaftar', 'error');
+      }
+      db.ref('users/' + username).set({
+        nama,
+        username,
+        email,
+        password: email, // password awal = email kampus
+        role: 'anggota',
+        aktif: true
+      }).then(() => {
+        Swal.fire('Berhasil', 'Anggota baru berhasil ditambahkan!', 'success');
+      });
+    });
+  });
+});
+
+
