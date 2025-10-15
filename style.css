@@ -54,43 +54,25 @@ body.bg{background:var(--bg);margin:0;font-family:Poppins,system-ui,-apple-syste
   .grid2{grid-template-columns:1fr}
 }
 
-/* ====== FIX RESPONSIVE TABLES ====== */
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left; /* rata kiri semua data */
-}
-.table th, .table td {
-  padding: 8px 12px;
-  text-align: left;
-  white-space: nowrap;
-}
-.table th {
-  background: #f5f7fb;
-  font-weight: 600;
-  border-bottom: 2px solid #e0e6ef;
-}
-.table td {
-  border-bottom: 1px solid #e9edf3;
-}
-
-/* Bungkus tabel agar scroll horizontal smooth di HP */
+/* === RESPONSIVE TABLE FIX === */
 .card {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
-
-/* Input cari & filter biar gak melebar di HP */
-.input {
-  max-width: 100%;
-  box-sizing: border-box;
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left !important;
 }
-
-/* Responsive tweak */
+.table th, .table td {
+  padding: 8px 10px;
+  text-align: left !important;
+  white-space: nowrap;
+}
 @media (max-width: 768px) {
   .table {
     font-size: 13px;
-    min-width: 600px;
+    min-width: 700px;
   }
   .toolbar, .flex {
     flex-wrap: wrap;
