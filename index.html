@@ -122,13 +122,18 @@
         <div class="toolbar">
           <div class="group admin-only"><button id="btnTambahAnggota" class="btn">+ Tambah Anggota</button></div>
           <div class="group"><input id="cariAnggota" class="input" placeholder="Cari anggota..." /></div>
+          div>
+          <div class="anggota-header">
+            <h3>Anggota Kelas</h3>
+            <div class="jumlah-anggota">Jumlah anggota: <span id="countAnggota">0</span></div>
+          </div>
+          <table class="table">
+            <thead><tr><th>NIM</th><th>Nama</th><th>Email</th><th>Role</th><th>Aksi</th></tr></thead>
+            <tbody id="tbodyAnggota"></tbody>
+          </table>
         </div>
-        <table class="table">
-          <thead><tr><th>NIM</th><th>Nama</th><th>Email</th><th>Role</th><th>Aksi</th></tr></thead>
-          <tbody id="tbodyAnggota"></tbody>
-        </table>
-      </div>
     </section>
+
 
         <!-- PENGATURAN -->
     <section id="page-pengaturan" class="page">
