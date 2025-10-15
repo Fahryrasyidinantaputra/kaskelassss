@@ -8,213 +8,152 @@
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-  <!-- Firebase -->
+  <!-- Export libs -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+
+  <!-- Firebase v8 -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
   <script src="firebase.js"></script>
-
-  <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      margin: 0; background: #eef3f9;
-      color: #222;
-    }
-    header {
-      background: linear-gradient(135deg,#0d6efd,#4b9fff);
-      color: #fff; padding: 15px 25px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    header h1 {font-size: 20px; margin:0;}
-    main {padding:20px;}
-    .btn {background:#0d6efd;color:#fff;border:none;padding:8px 14px;border-radius:6px;cursor:pointer}
-    .btn:hover{opacity:.9}
-    .input{padding:8px 10px;border:1px solid #ccc;border-radius:6px}
-    .table{width:100%;border-collapse:collapse;margin-top:12px}
-    .table th,.table td{border:1px solid #ddd;padding:8px;text-align:left}
-    .table th{background:#f0f3f8}
-    .muted{color:#666}
-    .badge{padding:3px 8px;border-radius:6px;font-size:12px}
-    .badge.success{background:#c8f7c5;color:#087408}
-    .badge.danger{background:#ffd5d5;color:#900}
-    .group{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
-    select.input{min-height:38px}
-    footer{margin-top:40px;text-align:center;color:#888;font-size:14px;padding:10px}
-  </style>
 </head>
-<body>
-
-<header>
-  <h1>Kas Kelas IF 24-A</h1>
-  <button id="btnLogout" class="btn">Logout</button>
-</header>
-
-<main>
-  <section id="transaksi">
-    <h2>📒 Transaksi Kas</h2>
-    <div class="group">
-      <button class="btn" id="btnQRIS">+ Ajukan QRIS</button>
-      <input id="search" class="input" placeholder="Cari nama / catatan..." />
-      <select id="selBulan" class="input" style="max-width:140px"></select>
-      <select id="selTahun" class="input" style="max-width:120px"></select>
-      <button class="btn" id="exportExcel">Excel</button>
-      <button class="btn" id="exportPDF">PDF</button>
-      <button class="btn admin-only" id="btnResetAll" title="Reset semua transaksi">♻ Reset</button>
+<body class="bg">
+  <header class="topbar">
+    <div class="brand">
+      <img src="assets/logo.png" alt="Logo" />
+      <span>Kas Kelas IF 24-A — UBP Karawang</span>
     </div>
-    <table class="table">
-      <thead>
-        <tr><th>Nama</th><th>Jenis</th><th>Nominal</th><th>Keterangan</th><th>Tanggal</th></tr>
-      </thead>
-      <tbody id="tbodyTransaksi"></tbody>
-    </table>
-  </section>
-
-  <section id="rekap">
-    <h2>📊 Rekap Pembayaran</h2>
-    <div class="group">
-      <select id="rekapScope" class="input" style="max-width:160px">
-        <option value="bulan" selected>Bulanan</option>
-        <option value="tahun">Tahunan</option>
-      </select>
-      <select id="rekapBulan" class="input" style="max-width:140px"></select>
-      <select id="rekapTahun" class="input" style="max-width:120px"></select>
-      <select id="filterStatus" class="input" style="max-width:150px">
-        <option value="all" selected>Semua Status</option>
-        <option value="lunas">Sudah Lunas</option>
-        <option value="belum">Belum Lunas</option>
-      </select>
-      <input id="cariNamaRekap" class="input" placeholder="Cari nama..." />
-      <button class="btn" id="btnRefreshRekap">Terapkan</button>
-      <button class="btn" id="exportRekapPDF">PDF</button>
+    <nav class="menu">
+      <a class="active" data-page="transaksi">Transaksi</a>
+      <a data-page="qris">Pengajuan QRIS</a>
+      <a data-page="rekap">Rekap</a>
+      <a data-page="anggota">Anggota</a>
+      <a data-page="pengaturan">Pengaturan</a>
+    </nav>
+    <div class="userbox">
+      <span id="whoami">—</span>
+      <button id="logout" class="btn small">Keluar</button>
     </div>
-    <table class="table">
-      <thead><tr><th>Nama</th><th>Total Bayar</th><th>Sisa</th><th>Status</th></tr></thead>
-      <tbody id="tbodyRekap"></tbody>
-    </table>
-  </section>
-</main>
+  </header>
 
-<footer>© 2025 Kas Kelas IF 24-A — Universitas Buana Perjuangan Karawang</footer>
+  <main class="wrap">
+    <section class="stats">
+      <div class="stat"><div class="stat-title">Saldo</div><div class="stat-value" id="saldo">Rp 0</div></div>
+      <div class="stat"><div class="stat-title">Iuran Mingguan</div><div class="stat-value" id="iuranLabel">Rp 5.000</div></div>
+      <div class="stat"><div class="stat-title">Minggu Ini</div><div class="stat-value" id="mingguIni">—</div></div>
+    </section>
 
-<script>
-  // ===== FIREBASE & INIT =====
-  const db = firebase.database();
-  let transaksi = {};
-  let users = {};
-  const IURAN = 5000;
-  const isAdmin = true; // nanti deteksi login
+    <!-- TRANSAKSI -->
+    <section id="page-transaksi" class="page active">
+      <div class="toolbar">
+        <div class="group" id="adminActions">
+          <button class="btn primary" id="btnAddCash">+ Setoran</button>
+          <button class="btn" id="btnPengeluaran">- Pengeluaran</button>
+        </div>
+        <div class="group">
+          <button class="btn" id="btnQRIS">+ QRIS (Ajukan)</button>
+          <input id="search" class="input" placeholder="Cari nama/username/catatan..." />
+          <select id="filterRange" class="input">
+            <option value="day">Harian</option>
+            <option value="week" selected>Mingguan</option>
+            <option value="month">Bulanan</option>
+            <option value="year">Tahunan</option>
+            <option value="all">Semua</option>
+          </select>
+          <button class="btn" id="exportExcel">Excel</button>
+          <button class="btn" id="exportPDF">PDF</button>
+        </div>
+      </div>
 
-  const $ = (id)=>document.querySelector(id);
-  const money = (x)=>'Rp '+Number(x||0).toLocaleString('id-ID');
+      <div class="card">
+        <table class="table" id="tblTransaksi">
+          <thead>
+            <tr>
+              <th>Tanggal</th><th>Nama</th><th>Jenis</th><th>Metode</th>
+              <th class="right">Nominal</th><th>Catatan</th><th>Status</th><th style="width:120px">Aksi</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+        <div id="empty" class="empty">Belum ada transaksi.</div>
+      </div>
+    </section>
 
-  const BULAN = ["Januari","Februari","Maret","April","Mei","Juni",
-                 "Juli","Agustus","September","Oktober","November","Desember"];
-  const startOfMonthByIndex=(y,m)=>{const d=new Date(y,m,1);d.setHours(0,0,0,0);return d;}
-  const endOfMonthByIndex=(y,m)=>{const d=new Date(y,m+1,0);d.setHours(23,59,59,999);return d;}
-  const startOfYear=(d)=>new Date(d.getFullYear(),0,1);
-  const endOfYear=(d)=>new Date(d.getFullYear(),11,31,23,59,59,999);
+    <!-- PENGAJUAN QRIS (untuk ADMIN konfirmasi) -->
+    <section id="page-qris" class="page">
+      <div class="card">
+        <div class="legend">Admin mengonfirmasi pengajuan QRIS dari anggota.</div>
+        <table class="table">
+          <thead><tr><th>Tanggal</th><th>Nama</th><th>Nominal</th><th>Catatan</th><th>Status</th><th>Aksi</th></tr></thead>
+          <tbody id="tbodyQRIS"></tbody>
+        </table>
+      </div>
+    </section>
 
-  // sample users
-  users = {
-    admin:{username:'admin',nama:'Administrator',role:'admin'},
-    u1:{username:'24416255201203',nama:'Fahry Rasyidinanta Putra',role:'anggota'}
-  };
+    <!-- REKAP -->
+    <section id="page-rekap" class="page">
+      <div class="card">
+        <div class="flex gap">
+          <select id="rekapMode" class="input" style="max-width:160px">
+            <option value="day">Harian</option>
+            <option value="week" selected>Mingguan</option>
+            <option value="month">Bulanan</option>
+            <option value="year">Tahunan</option>
+          </select>
+          <input id="rekapDate" type="date" class="input" />
+          <button class="btn" id="btnRefreshRekap">Terapkan</button>
+          <input id="cariNamaRekap" class="input" placeholder="Cari nama..." />
+          <button class="btn" id="exportRekapPDF">PDF</button>
+        </div>
+        <div class="legend">Status iuran per anggota untuk periode terpilih. Cicilan otomatis terhitung.</div>
+        <table class="table" id="tblRekap">
+          <thead><tr><th>Nama</th><th>Terbayar</th><th>Sisa</th><th>Status</th></tr></thead>
+          <tbody id="tbodyRekap"></tbody>
+        </table>
+      </div>
+    </section>
 
-  function populateMonthYearSelects(){
-    const now=new Date(),cy=now.getFullYear(),cm=now.getMonth();
-    const bulanOpt=BULAN.map((b,i)=>`<option value="${i}" ${i===cm?'selected':''}>${b}</option>`).join('');
-    const tahunOpt=Array.from({length:6},(_,k)=>2025+k)
-      .map(y=>`<option value="${y}" ${y===cy?'selected':''}>${y}</option>`).join('');
-    $('#selBulan').innerHTML=bulanOpt; $('#rekapBulan').innerHTML=bulanOpt;
-    $('#selTahun').innerHTML=tahunOpt; $('#rekapTahun').innerHTML=tahunOpt;
-  }
-  populateMonthYearSelects();
+    <!-- ANGGOTA -->
+    <section id="page-anggota" class="page">
+      <div class="card">
+        <div class="toolbar">
+          <div class="group admin-only"><button id="btnTambahAnggota" class="btn">+ Tambah Anggota</button></div>
+          <div class="group"><input id="cariAnggota" class="input" placeholder="Cari anggota..." /></div>
+        </div>
+        <table class="table">
+          <thead><tr><th>NIM</th><th>Nama</th><th>Email</th><th>Role</th><th>Aksi</th></tr></thead>
+          <tbody id="tbodyAnggota"></tbody>
+        </table>
+      </div>
+    </section>
 
-  // dummy data transaksi
-  transaksi={
-    a1:{username:'24416255201203',nama:'Fahry Rasyidinanta Putra',jenis:'setoran',nominal:5000,catatan:'Minggu 1',tanggal:Date.now()},
-    a2:{username:'24416255201203',nama:'Fahry Rasyidinanta Putra',jenis:'qris',status:'approved',nominal:10000,catatan:'QRIS',tanggal:Date.now()}
-  };
+    <!-- PENGATURAN -->
+    <section id="page-pengaturan" class="page">
+      <div class="card small">
+        <h3>Pengaturan Iuran & QRIS</h3>
+        <div class="grid2">
+          <label>Iuran Mingguan (Rp)
+            <input id="setIuran" class="input" type="number" min="0" />
+          </label>
+          <label>Tanggal Mulai Minggu (opsional)
+            <input id="setStart" class="input" type="date" />
+          </label>
+        </div>
+        <div class="flex gap" style="margin-top:8px">
+          <button class="btn primary admin-only" id="btnSimpanPengaturan">Simpan</button>
+          <button class="btn" id="btnReloadPengaturan">Muat Ulang</button>
+        </div>
+        <div class="hr"></div>
+        <h4>QRIS Kelas (statis)</h4>
+        <p class="muted">Scan QR berikut lalu ajukan pembayaran dari tombol “+ QRIS (Ajukan)” di halaman Transaksi.</p>
+        <img src="assets/qris.png" alt="QRIS" class="qris" />
+      </div>
+    </section>
+  </main>
 
-  // ============= FILTER TRANSAKSI =============
-  function renderTransaksi(){
-    let arr = Object.values(transaksi);
-    const bulanIdx=+$('#selBulan').value, tahun=+$('#selTahun').value;
-    const start=startOfMonthByIndex(tahun,bulanIdx), end=endOfMonthByIndex(tahun,bulanIdx);
-    arr=arr.filter(t=>{const d=new Date(t.tanggal);return d>=start&&d<=end;});
-    const q=($('#search').value||'').toLowerCase();
-    arr=arr.filter(t=>t.nama.toLowerCase().includes(q)||t.catatan.toLowerCase().includes(q));
-    $('#tbodyTransaksi').innerHTML=arr.map(t=>`
-      <tr>
-        <td>${t.nama}</td>
-        <td>${t.jenis}</td>
-        <td>${money(t.nominal)}</td>
-        <td>${t.catatan}</td>
-        <td>${new Date(t.tanggal).toLocaleDateString('id-ID')}</td>
-      </tr>`).join('')||`<tr><td colspan="5" class="muted" style="text-align:center">Tidak ada data</td></tr>`;
-  }
-  $('#selBulan').onchange=renderTransaksi;
-  $('#selTahun').onchange=renderTransaksi;
-  $('#search').oninput=renderTransaksi;
-  renderTransaksi();
-
-  // ============= RESET TRANSAKSI =============
-  $('#btnResetAll').onclick=()=>{
-    Swal.fire({
-      icon:'warning',
-      title:'Reset semua transaksi?',
-      text:'Ini akan menghapus seluruh data transaksi permanen.',
-      showCancelButton:true,
-      confirmButtonText:'Ya, hapus semua',
-      cancelButtonText:'Batal'
-    }).then(r=>{
-      if(!r.isConfirmed)return;
-      transaksi={};
-      renderTransaksi(); renderRekap();
-      Swal.fire('Berhasil','Semua transaksi direset.','success');
-    });
-  };
-
-  // ============= REKAP =============
-  function renderRekap(){
-    const scope=$('#rekapScope').value;
-    const tahun=+$('#rekapTahun').value;
-    const bulanIdx=+$('#rekapBulan').value;
-    const tbody=$('#tbodyRekap');
-    const filter=$('#filterStatus').value;
-    const start=scope==='bulan'?startOfMonthByIndex(tahun,bulanIdx):startOfYear(new Date(tahun,0,1));
-    const end  =scope==='bulan'?endOfMonthByIndex(tahun,bulanIdx):endOfYear(new Date(tahun,11,31));
-    const target=scope==='bulan'?4*IURAN:48*IURAN;
-    const rows=[];
-    Object.values(users).filter(u=>u.role!=='admin').forEach(u=>{
-      let paid=0;
-      Object.values(transaksi).forEach(t=>{
-        if(t.username!==u.username)return;
-        const d=new Date(t.tanggal);
-        const masuk=(t.jenis==='setoran')||(t.jenis==='qris'&&t.status==='approved');
-        if(d>=start&&d<=end&&masuk)paid+=+t.nominal;
-      });
-      const sisa=Math.max(target-paid,0);
-      const lunas=sisa<=0;
-      if(filter==='lunas'&&!lunas)return;
-      if(filter==='belum'&&lunas)return;
-      rows.push(`<tr>
-        <td>${u.nama}</td>
-        <td>${money(paid)}</td>
-        <td>${money(sisa)}</td>
-        <td><span class="badge ${lunas?'success':'danger'}">${lunas?'Sudah Lunas':'Belum Lunas'}</span></td>
-      </tr>`);
-    });
-    tbody.innerHTML=rows.join('')||`<tr><td colspan="4" class="muted" style="text-align:center">Tidak ada data</td></tr>`;
-  }
-  $('#rekapScope').onchange=()=>{$('#rekapBulan').style.display=$('#rekapScope').value==='bulan'?'':'none';renderRekap();}
-  $('#rekapBulan').onchange=renderRekap;
-  $('#rekapTahun').onchange=renderRekap;
-  $('#filterStatus').onchange=renderRekap;
-  renderRekap();
-
-  $('#btnRefreshRekap').onclick=renderRekap;
-</script>
-
+  <footer class="footer">© UBP — Kas Kelas IF 24-A</footer>
+  <script src="script.js"></script>
 </body>
 </html>
