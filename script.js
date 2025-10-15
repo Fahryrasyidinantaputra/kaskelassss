@@ -58,54 +58,80 @@ $('#btnReloadPengaturan')?.addEventListener('click', ()=>loadSettings());
 function loadUsers(){
   return db.ref('users').once('value').then(s=>{ users=s.val()||{}; renderAnggota(); });
 }
+
 function renderAnggota(){
   const q = ($('#cariAnggota')?.value||'').toLowerCase();
-  const tbody = $('#tbodyAnggota'); if(!tbody) return;
-  tbody.innerHTML='';
-  Object.values(users).filter(u=>u.role!=='admin')
-    .filter(u=>!q || u.nama?.toLowerCase().includes(q) || u.username?.toLowerCase().includes(q))
-    .sort((a,b)=> a.nama?.localeCompare(b.nama,'id'))
-    .forEach(u=>{
-      const tr=document.createElement('tr');
-      tr.innerHTML = `
-        <td>${u.username||'-'}</td>
-        <td>${u.nama||'-'}</td>
-        <td>${u.email||'-'}</td>
-        <td><span class="badge">${u.role||'anggota'}</span></td>
-        <td>
-          ${isAdmin ? `
-            <button class="btn small" data-act="reset" data-id="${u.username}">Reset PW</button>
-            <button class="btn small" data-act="toggle" data-id="${u.username}">${u.aktif===false?'Aktifkan':'Nonaktifkan'}</button>
-            <button class="btn small danger" data-act="hapus" data-id="${u.username}">Hapus</button>
-          ` : `${me.username===u.username?`<button class="btn small" data-act="pw" data-id="${u.username}">Ganti Password</button>`:''}`}
-        </td>`;
-      tbody.appendChild(tr);
-    });
+  const tbody = $('#tbodyAnggota');
+  tbody.innerHTML = '';
 
-  tbody.onclick=(e)=>{
-    const b=e.target.closest('button'); if(!b) return;
-    const id=b.dataset.id, act=b.dataset.act;
-    if(act==='pw'){
-      Swal.fire({title:'Ganti Password',input:'text',inputPlaceholder:'password baru',showCancelButton:true})
-        .then(r=>{ if(!r.value) return; db.ref('users/'+id+'/password').set(r.value).then(()=>toast('success','Password diperbarui')); });
-      return;
+  const list = Object.values(users)
+    .filter(u => u.role !== 'admin')
+    .filter(u => !q || u.nama.toLowerCase().includes(q) || (u.username||'').toLowerCase().includes(q))
+    .sort((a,b) => a.nama.localeCompare(b.nama, 'id'));
+
+  // tampilkan jumlah anggota
+  $('#countAnggota').textContent = list.length;
+
+  list.forEach(u => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td data-label="NIM">${u.username||''}</td>
+      <td data-label="Nama">${u.nama||''}</td>
+      <td data-label="Email">${u.email||''}</td>
+      <td data-label="Role">${u.role||''}</td>
+      <td data-label="Aksi">
+        ${isAdmin ? `
+          <button class="btn small" data-act="reset" data-id="${u.username}">Reset PW</button>
+          <button class="btn small" data-act="toggle" data-id="${u.username}">${u.aktif===false?'Aktifkan':'Nonaktifkan'}</button>
+          <button class="btn small danger" data-act="hapus" data-id="${u.username}">Hapus</button>`
+        : (me.username===u.username ? `<button class="btn small" data-act="pw" data-id="${u.username}">Ganti Password</button>` : '')}
+      </td>`;
+    tbody.appendChild(tr);
+  });
+
+  tbody.onclick = (e) => {
+    const b = e.target.closest('button');
+    if(!b) return;
+    const act = b.dataset.act;
+    const id = b.dataset.id;
+    if(act === 'pw') {
+      Swal.fire({
+        title:'Ganti Password',
+        input:'text',
+        inputPlaceholder:'Masukkan password baru',
+        showCancelButton:true
+      }).then(r=>{
+        if(r.value) {
+          db.ref('users/'+id+'/password').set(r.value).then(()=>toast('success','Password diperbarui'));
+        }
+      });
     }
     if(!isAdmin) return;
-    if(act==='reset'){
-      const email = users[id]?.email||'';
+    if(act === 'reset') {
+      const email = users[id]?.email || '';
       if(!email) return toast('error','Email kosong');
       db.ref('users/'+id+'/password').set(email).then(()=>toast('success','Password direset ke email'));
-    }else if(act==='toggle'){
-      const now = users[id].aktif===false ? true:false;
-      db.ref('users/'+id+'/aktif').set(now).then(()=>{ toast('success','Status diubah'); loadUsers(); });
-    }else if(act==='hapus'){
-      confirmBox('Hapus Anggota?','Akun login akan dihapus.').then(r=>{
-        if(r.isConfirmed) db.ref('users/'+id).remove().then(()=>{ toast('success','Terhapus'); loadUsers(); });
+    } else if(act === 'toggle') {
+      const newAktif = users[id].aktif === false ? true : false;
+      db.ref('users/'+id+'/aktif').set(newAktif).then(()=>{ toast('success','Status diubah'); loadUsers(); });
+    } else if(act === 'hapus') {
+      Swal.fire({
+        icon:'warning',
+        title:'Hapus Anggota?',
+        text:'Data anggota akan dihapus permanen.',
+        showCancelButton:true,
+        confirmButtonText:'Ya, hapus'
+      }).then(r=>{
+        if(r.isConfirmed) {
+          db.ref('users/'+id).remove().then(()=> {
+            toast('success','Anggota dihapus');
+            loadUsers();
+          });
+        }
       });
     }
   };
 }
-$('#cariAnggota')?.addEventListener('input', renderAnggota);
 
 /* ========= Nav ========= */
 $$('.menu a').forEach(a=>{
@@ -145,11 +171,9 @@ function transaksiArray(){ return Object.entries(transaksi).map(([id,t])=>({id,.
 
 function renderTransaksi(){
   let arr = transaksiArray();
-
   const m = Number($('#selBulan')?.value ?? new Date().getMonth());
   const y = Number($('#selTahun')?.value ?? new Date().getFullYear());
   const start = startOfMonthIdx(y,m), end = endOfMonthIdx(y,m);
-
   arr = arr.filter(t=>{ const d=new Date(t.tanggal); return d>=start && d<=end; });
 
   const q = ($('#search').value||'').toLowerCase();
@@ -168,7 +192,6 @@ function renderTransaksi(){
          t.status==='rejected' ? '<span class="badge danger">rejected</span>' :
          '<span class="badge warn">pending</span>')
       : '-';
-
     const tr=document.createElement('tr');
     tr.innerHTML=`
       <td>${new Date(t.tanggal).toLocaleDateString('id-ID')}</td>
@@ -203,54 +226,6 @@ function renderTransaksi(){
   };
 }
 $('#search').oninput=renderTransaksi;
-
-// Editor transaksi (admin)
-function baseTransaksi(t={}){ const today=todayISO(); return {
-  tanggal: t.tanggal||today, username:t.username||'', nama:t.nama||'', jenis:t.jenis||'setoran',
-  metode:t.metode||'tunai', nominal:Number(t.nominal||IURAN), catatan:t.catatan||'', status:t.status||undefined
-}; }
-function openEditor(id){
-  if(!isAdmin) return;
-  const isEdit=!!id; const data=isEdit?baseTransaksi(transaksi[id]):baseTransaksi();
-  const options = Object.values(users).filter(u=>u.role!=='admin' && u.aktif!==false)
-    .map(u=>`<option value="${u.username}" ${u.username===data.username?'selected':''}>${u.nama} (${u.username})</option>`).join('');
-  Swal.fire({
-    title:isEdit?'Edit Transaksi':'Tambah Transaksi',
-    html:`<div class="formgrid">
-      <label>Tanggal<input id="f_tgl" type="date" class="swal2-input" value="${data.tanggal}"></label>
-      <label>Anggota<select id="f_user" class="swal2-input"><option value="">—pilih—</option>${options}</select></label>
-      <label>Jenis<select id="f_jenis" class="swal2-input">
-        <option value="setoran" ${data.jenis==='setoran'?'selected':''}>Setoran</option>
-        <option value="pengeluaran" ${data.jenis==='pengeluaran'?'selected':''}>Pengeluaran</option>
-      </select></label>
-      <label>Metode<select id="f_metode" class="swal2-input">
-        <option value="tunai" ${data.metode==='tunai'?'selected':''}>Tunai</option>
-        <option value="qris" ${data.metode==='qris'?'selected':''}>QRIS</option>
-      </select></label>
-      <label>Nominal (Rp)<input id="f_nom" type="number" class="swal2-input" min="0" value="${data.nominal}"></label>
-      <label>Catatan<input id="f_cat" class="swal2-input" value="${data.catatan}"></label>
-    </div>`,
-    width:650, showCancelButton:true, confirmButtonText:isEdit?'Simpan':'Tambah',
-    preConfirm:()=>{
-      const tgl=$('#f_tgl').value, uname=$('#f_user').value, jenis=$('#f_jenis').value, metode=$('#f_metode').value, nominal=Number($('#f_nom').value||0), catatan=$('#f_cat').value.trim();
-      if(!tgl||!uname||nominal<=0){ Swal.showValidationMessage('Tanggal, anggota, nominal wajib diisi'); return false; }
-      const nama = users[uname]?.nama || uname;
-      return {tanggal:tgl, username:uname, nama, jenis, metode, nominal, catatan};
-    }
-  }).then(r=>{
-    if(!r.value) return;
-    if(isEdit) db.ref('transaksi/'+id).update(r.value).then(()=>toast('success','Disimpan'));
-    else { const key=db.ref('transaksi').push().key; db.ref('transaksi/'+key).set({...r.value,id:key}).then(()=>toast('success','Ditambahkan')); }
-  });
-}
-function deleteTransaksi(id){
-  if(!isAdmin) return;
-  confirmBox('Hapus transaksi?','Tindakan ini tidak bisa dibatalkan.').then(res=>{
-    if(res.isConfirmed) db.ref('transaksi/'+id).remove().then(()=>toast('success','Dihapus'));
-  });
-}
-$('#btnAddCash')?.addEventListener('click', ()=>openEditor());
-$('#btnPengeluaran')?.addEventListener('click', ()=>{ openEditor(); setTimeout(()=>{ $('#f_jenis').value='pengeluaran'; $('#f_metode').value='tunai'; },50); });
 
 /* ========= QRIS: Ajukan (anggota) ========= */
 $('#btnQRIS')?.addEventListener('click', ()=>{
@@ -338,8 +313,9 @@ function sumByUserInRange(uname, start, end){
   });
   return sum;
 }
+
 function renderRekap(){
-  const scope = $('#rekapScope').value; // 'bulan' | 'tahun'
+  const scope = $('#rekapScope').value;
   const tahun = Number($('#rekapTahun').value || new Date().getFullYear());
   const bulanIdx = Number($('#rekapBulan')?.value || new Date().getMonth());
   const tbody=$('#tbodyRekap'); tbody.innerHTML='';
@@ -350,12 +326,12 @@ function renderRekap(){
   if(scope==='bulan'){
     start = startOfMonthIdx(tahun, bulanIdx);
     end   = endOfMonthIdx(tahun, bulanIdx);
-    target = 4 * IURAN;            // 4 minggu / bulan
+    target = 4 * IURAN;
     $('#rekapTargetInfo').textContent = `Target bulanan per anggota: ${money(target)} (${fmt(4)} minggu × ${money(IURAN)})`;
   }else{
     start = startOfYear(tahun);
     end   = endOfYear(tahun);
-    target = 48 * IURAN;           // 12 bulan * 4 minggu
+    target = 48 * IURAN;
     $('#rekapTargetInfo').textContent = `Target tahunan per anggota: ${money(target)} (${fmt(48)} minggu × ${money(IURAN)})`;
   }
 
@@ -421,7 +397,7 @@ Promise.all([loadSettings(), loadUsers()]).then(()=>{
   renderTransaksi(); renderQRISPending(); renderRekap();
 });
 
-// === TAMBAH ANGGOTA (khusus admin) ===
+/* === TAMBAH ANGGOTA (ADMIN) === */
 $('#btnTambahAnggota')?.addEventListener('click', ()=>{
   if (!isAdmin) {
     return Swal.fire('Akses Ditolak', 'Hanya admin yang bisa menambah anggota.', 'error');
@@ -460,7 +436,7 @@ $('#btnTambahAnggota')?.addEventListener('click', ()=>{
         nama,
         username,
         email,
-        password: email, // password awal = email kampus
+        password: email,
         role: 'anggota',
         aktif: true
       }).then(() => {
@@ -469,5 +445,3 @@ $('#btnTambahAnggota')?.addEventListener('click', ()=>{
     });
   });
 });
-
-
