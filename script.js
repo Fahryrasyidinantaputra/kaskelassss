@@ -273,6 +273,88 @@ $('#btnQRIS')?.addEventListener('click', ()=>{
   });
 });
 
+/* ========= TAMBAH SETORAN (PEMASUKAN) ========= */
+$('#btnAddCash')?.addEventListener('click', () => {
+  Swal.fire({
+    title: 'Tambah Setoran (Pemasukan)',
+    html: `
+      <label>Nama</label>
+      <input id="in_nama" class="swal2-input" value="${me.nama || me.username}">
+      <label>Nominal (Rp)</label>
+      <input id="in_nom" class="swal2-input" type="number" min="1000" placeholder="Masukkan nominal">
+      <label>Keterangan</label>
+      <input id="in_cat" class="swal2-input" placeholder="contoh: iuran minggu ke-2">
+    `,
+    showCancelButton: true,
+    confirmButtonText: 'Simpan',
+    preConfirm: () => {
+      const nama = $('#in_nama').value.trim();
+      const nominal = Number($('#in_nom').value || 0);
+      const catatan = $('#in_cat').value.trim();
+      if (!nama || nominal <= 0) {
+        Swal.showValidationMessage('Nama dan nominal wajib diisi');
+        return false;
+      }
+      return { nama, nominal, catatan };
+    }
+  }).then(r => {
+    if (!r.value) return;
+    const payload = {
+      id: db.ref('transaksi').push().key,
+      tanggal: todayISO(),
+      username: me.username,
+      nama: r.value.nama,
+      jenis: 'setoran',
+      metode: 'Tunai',
+      nominal: r.value.nominal,
+      catatan: r.value.catatan,
+      status: 'approved'
+    };
+    db.ref('transaksi/' + payload.id).set(payload).then(() => toast('success', 'Setoran berhasil ditambahkan'));
+  });
+});
+
+/* ========= TAMBAH PENGELUARAN ========= */
+$('#btnPengeluaran')?.addEventListener('click', () => {
+  Swal.fire({
+    title: 'Tambah Pengeluaran',
+    html: `
+      <label>Nama Pengeluaran</label>
+      <input id="out_nama" class="swal2-input" placeholder="Misal: Beli alat tulis">
+      <label>Nominal (Rp)</label>
+      <input id="out_nom" class="swal2-input" type="number" min="1000" placeholder="Masukkan nominal">
+      <label>Keterangan</label>
+      <input id="out_cat" class="swal2-input" placeholder="contoh: Keperluan kelas">
+    `,
+    showCancelButton: true,
+    confirmButtonText: 'Simpan',
+    preConfirm: () => {
+      const nama = $('#out_nama').value.trim();
+      const nominal = Number($('#out_nom').value || 0);
+      const catatan = $('#out_cat').value.trim();
+      if (!nama || nominal <= 0) {
+        Swal.showValidationMessage('Nama dan nominal wajib diisi');
+        return false;
+      }
+      return { nama, nominal, catatan };
+    }
+  }).then(r => {
+    if (!r.value) return;
+    const payload = {
+      id: db.ref('transaksi').push().key,
+      tanggal: todayISO(),
+      username: me.username,
+      nama: r.value.nama,
+      jenis: 'pengeluaran',
+      metode: 'Tunai',
+      nominal: r.value.nominal,
+      catatan: r.value.catatan,
+      status: 'approved'
+    };
+    db.ref('transaksi/' + payload.id).set(payload).then(() => toast('success', 'Pengeluaran berhasil ditambahkan'));
+  });
+});
+
 /* ========= QRIS: Konfirmasi (admin) ========= */
 function renderQRISPending(){
   const tbody = $('#tbodyQRIS'); if(!tbody) return;
@@ -398,7 +480,7 @@ Promise.all([loadSettings(), loadUsers()]).then(()=>{
 });
 
 /* === TAMBAH ANGGOTA (ADMIN) === */
-$('#btnTambahAnggota')?.addEventListener('click', ()=>{
+$('#btnTambahAnggota')?.addEventListener('click', () => {
   if (!isAdmin) {
     return Swal.fire('Akses Ditolak', 'Hanya admin yang bisa menambah anggota.', 'error');
   }
@@ -428,10 +510,14 @@ $('#btnTambahAnggota')?.addEventListener('click', ()=>{
   }).then(result => {
     if (!result.value) return;
     const { nama, username, email } = result.value;
-    db.ref('users/' + username).once('value', snap => {
+
+    // Cek apakah sudah ada user dengan username tersebut
+    db.ref('users/' + username).once('value').then(snap => {
       if (snap.exists()) {
         return Swal.fire('Gagal', 'NIM sudah terdaftar', 'error');
       }
+
+      // Tambahkan user baru
       db.ref('users/' + username).set({
         nama,
         username,
@@ -441,10 +527,12 @@ $('#btnTambahAnggota')?.addEventListener('click', ()=>{
         aktif: true
       }).then(() => {
         Swal.fire('Berhasil', 'Anggota baru berhasil ditambahkan!', 'success');
+        loadUsers(); // Langsung update tabel anggota
       });
     });
   });
 });
+
 
 // === Biar pencarian real-time seperti transaksi ===
 $('#cariAnggota')?.addEventListener('input', renderAnggota);
