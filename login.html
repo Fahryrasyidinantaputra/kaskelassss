@@ -13,150 +13,71 @@
   <script src="firebase.js"></script>
 
   <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(145deg, #e9f0ff 0%, #f5f7fa 100%);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .card {
-      background: #fff;
-      width: 360px;
-      padding: 35px;
-      border-radius: 18px;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-      text-align: center;
-      animation: fadeIn 0.5s ease;
-    }
-    @keyframes fadeIn {
-      from {opacity: 0; transform: translateY(-15px);}
-      to {opacity: 1; transform: translateY(0);}
-    }
-    h2 {
-      margin-bottom: 10px;
-      font-size: 22px;
-      color: #222;
-    }
-    p {
-      color: #777;
-      font-size: 14px;
-      margin-top: 0;
-      margin-bottom: 20px;
-    }
-    label {
-      font-weight: 600;
-      font-size: 13px;
-      color: #333;
-      margin-top: 8px;
-      display: block;
-      text-align: left;
-    }
-    input {
-      width: 100%;
-      padding: 10px;
-      border: 1.5px solid #ccc;
-      border-radius: 8px;
-      margin-top: 4px;
-      font-size: 14px;
-      transition: border-color 0.3s;
-    }
-    input:focus {
-      border-color: #0d6efd;
-      outline: none;
-    }
-    .password-wrapper {
-      position: relative;
-    }
-    .showpw {
-      position: absolute;
-      right: 10px;
-      top: 50%;
-      transform: translateY(-50%);
-      cursor: pointer;
-      opacity: 0.6;
-    }
-    button {
-      width: 100%;
-      background: #0d6efd;
-      color: white;
-      border: none;
-      padding: 12px;
-      margin-top: 18px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background 0.25s;
-    }
-    button:hover {
-      background: #084ec2;
-    }
-    small {
-      font-size: 13px;
-      color: #666;
-      display: block;
-      margin-top: 12px;
-      text-align: center;
-    }
+    body{font-family:Poppins,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(145deg,#e9f0ff,#f6f8fb);height:100vh;display:flex;align-items:center;justify-content:center;margin:0}
+    .card{width:360px;background:#fff;border-radius:18px;padding:32px;box-shadow:0 12px 30px rgba(13,110,253,.18);text-align:center}
+    .brand{display:flex;flex-direction:column;align-items:center;margin-bottom:16px}
+    .brand img{width:72px;height:72px;border-radius:50%;box-shadow:0 6px 16px rgba(0,0,0,.08)}
+    h2{margin:10px 0 2px;font-size:22px}
+    p{margin:0 0 14px;color:#667085;font-size:13px}
+    label{display:block;text-align:left;font-weight:600;font-size:13px;color:#344054;margin-top:8px}
+    input{width:100%;padding:11px;border:1.5px solid #d0d5dd;border-radius:10px;margin-top:4px;font-size:14px}
+    input:focus{outline:none;border-color:#0d6efd;box-shadow:0 0 0 3px rgba(13,110,253,.12)}
+    .pw-wrap{position:relative}
+    .pw-wrap .toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);cursor:pointer;opacity:.6}
+    .btn{width:100%;padding:12px;border:none;border-radius:10px;background:#0d6efd;color:#fff;font-weight:700;margin-top:16px;cursor:pointer}
+    .btn:hover{filter:brightness(.95)}
+    small{display:block;margin-top:10px;color:#98a2b3}
   </style>
 </head>
 <body>
   <div class="card">
-    <img src="assets/logo.png" alt="Logo" style="width:70px;margin-bottom:10px;">
-    <h2>Kas Kelas IF 24-A</h2>
-    <p>Dashboard kas kelas </p>
+    <div class="brand">
+      <img src="assets/logo.png" alt="Logo">
+      <h2>Kas Kelas IF 24-A</h2>
+      <p>Dashboard kas kelas modern & real-time</p>
+    </div>
 
     <form id="loginForm">
       <label>NIM (username)</label>
-      <input id="loginUser" placeholder="NIM anda" />
+      <input id="loginUser" placeholder="24416255xxxxx" />
       <label>Password</label>
-      <div class="password-wrapper">
-        <input id="loginPass" type="password" placeholder="email kampus" />
-        <span id="toggleLoginPw" class="showpw">👁</span>
+      <div class="pw-wrap">
+        <input id="loginPass" type="password" placeholder="email kampus (mis. if24.nama@mhs.ubpkarawang.ac.id)" />
+        <span id="togglePw" class="toggle">👁</span>
       </div>
-      <button type="button" id="btnLogin">Masuk</button>
-      
+      <button type="button" id="btnLogin" class="btn">Masuk</button>
+      <small>Admin: <b>admin</b> / <b>12345</b></small>
     </form>
   </div>
 
   <script>
     const toast = (icon, text) => Swal.fire({icon, text, timer:1400, showConfirmButton:false});
 
-    // fitur lihat password
-    document.getElementById("toggleLoginPw").onclick = () => {
-      const pass = document.getElementById("loginPass");
-      pass.type = pass.type === "password" ? "text" : "password";
-    };
-
-    // seed admin jika belum ada
+    // Seed ADMIN (sekali)
     db.ref('users/admin').once('value', s=>{
       if(!s.exists()){
-        db.ref('users/admin').set({
-          nama:'Administrator',
-          username:'admin',
-          password:'12345',
-          role:'admin',
-          aktif:true
-        });
+        db.ref('users/admin').set({ nama:'Administrator', username:'admin', password:'12345', role:'admin', aktif:true });
       }
     });
 
-    // login fungsi
-    document.getElementById('btnLogin').onclick = ()=>{
+    // Toggle 👁
+    document.getElementById('togglePw').onclick=()=>{
+      const p=document.getElementById('loginPass');
+      p.type = p.type==='password'?'text':'password';
+    };
+
+    // Login
+    document.getElementById('btnLogin').onclick=()=>{
       const u = loginUser.value.trim();
       const p = loginPass.value.trim();
       if(!u||!p) return toast('warning','Lengkapi username & password');
-
       db.ref('users/'+u).once('value', snap=>{
         if(!snap.exists()) return toast('error','Username tidak ditemukan');
         const user = snap.val();
-        if(user.password !== p) return toast('error','Password salah');
-        if(user.aktif === false) return toast('error','Akun nonaktif');
+        if(user.password!==p) return toast('error','Password salah');
+        if(user.aktif===false) return toast('error','Akun nonaktif');
         localStorage.setItem('activeUser', JSON.stringify(user));
-        toast('success','Login berhasil');
-        setTimeout(()=>location.href='index.html',350);
+        toast('success','Login berhasil'); setTimeout(()=>location.href='index.html',350);
       });
     };
   </script>
