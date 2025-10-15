@@ -2,8 +2,8 @@
 <html lang="id">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Kas Kelas IF24-A — Dashboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+  <title>Kas Kelas IF24-A – Dashboard</title>
   <link rel="icon" href="assets/logo.png" />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -23,19 +23,19 @@
   <header class="topbar">
     <div class="brand">
       <img src="assets/logo.png" alt="Logo" />
-      <span>Kas Kelas IF24-A — UBP Karawang</span>
+      <span>Kas Kelas IF24-A – UBP Karawang</span>
     </div>
-    <nav class="menu">
-      <a class="active" data-page="transaksi">Transaksi</a>
-      <a data-page="qris">Pengajuan QRIS</a>
-      <a data-page="rekap">Rekap</a>
-      <a data-page="anggota">Anggota</a>
-      <a data-page="pengaturan">Pengaturan</a>
-    </nav>
     <div class="userbox">
       <span id="whoami">—</span>
       <button id="logout" class="btn small">Keluar</button>
     </div>
+    <nav class="menu">
+      <a class="active" data-page="transaksi">Transaksi</a>
+      <a data-page="qris">QRIS</a>
+      <a data-page="rekap">Rekap</a>
+      <a data-page="anggota">Anggota</a>
+      <a data-page="pengaturan">Pengaturan</a>
+    </nav>
   </header>
 
   <main class="wrap">
@@ -53,10 +53,10 @@
           <button class="btn" id="btnPengeluaran">- Pengeluaran</button>
         </div>
         <div class="group">
-          <button class="btn" id="btnQRIS">+ QRIS (Ajukan)</button>
-          <input id="search" class="input" placeholder="Cari nama/username/catatan..." />
-          <select id="selBulan" class="input" style="max-width:140px"></select>
-          <select id="selTahun" class="input" style="max-width:120px"></select>
+          <button class="btn" id="btnQRIS">+ QRIS</button>
+          <input id="search" class="input" placeholder="Cari..." />
+          <select id="selBulan" class="input"></select>
+          <select id="selTahun" class="input"></select>
           <button class="btn" id="exportExcel">Excel</button>
           <button class="btn" id="exportPDF">PDF</button>
           <button class="btn admin-only" id="btnResetAll" title="Reset semua transaksi">♻ Reset</button>
@@ -68,7 +68,7 @@
           <thead>
             <tr>
               <th>Tanggal</th><th>Nama</th><th>Jenis</th><th>Metode</th>
-              <th class="right">Nominal</th><th>Catatan</th><th>Status</th><th style="width:120px">Aksi</th>
+              <th class="right">Nominal</th><th>Catatan</th><th>Status</th><th>Aksi</th>
             </tr>
           </thead>
           <tbody id="tbody"></tbody>
@@ -91,19 +91,21 @@
    <!-- REKAP -->
     <section id="page-rekap" class="page">
       <div class="card">
-        <div class="flex gap">
-          <select id="rekapScope" class="input" style="max-width:160px">
+        <div class="flex gap" style="margin-bottom:12px">
+          <select id="rekapScope" class="input">
             <option value="bulan" selected>Bulanan</option>
             <option value="tahun">Tahunan</option>
           </select>
-          <select id="rekapBulan" class="input" style="max-width:140px"></select>
-          <select id="rekapTahun" class="input" style="max-width:120px"></select>
-          <select id="filterStatus" class="input" style="max-width:150px">
+          <select id="rekapBulan" class="input"></select>
+          <select id="rekapTahun" class="input"></select>
+          <select id="filterStatus" class="input">
             <option value="all" selected>Semua Status</option>
             <option value="lunas">Sudah Lunas</option>
             <option value="belum">Belum Lunas</option>
           </select>
           <button class="btn" id="btnRefreshRekap">Terapkan</button>
+        </div>
+        <div class="flex gap" style="margin-bottom:12px">
           <input id="cariNamaRekap" class="input" placeholder="Cari nama..." />
           <button class="btn" id="exportRekapPDF">PDF</button>
         </div>
@@ -115,26 +117,25 @@
       </div>
     </section>
 
-
     <!-- ANGGOTA -->
     <section id="page-anggota" class="page">
       <div class="card">
         <div class="toolbar">
-          <div class="group admin-only"><button id="btnTambahAnggota" class="btn">+ Tambah Anggota</button></div>
+          <div class="group admin-only"><button id="btnTambahAnggota" class="btn">+ Tambah</button></div>
           <div class="group"><input id="cariAnggota" class="input" placeholder="Cari anggota..." /></div>
-          <div class="anggota-header">
-            <h3>Anggota Kelas</h3>
-            <div class="jumlah-anggota">Jumlah anggota: <span id="countAnggota">0</span></div>
-          </div>
-          <table class="table">
-            <thead><tr><th>NIM</th><th>Nama</th><th>Email</th><th>Role</th><th>Aksi</th></tr></thead>
-            <tbody id="tbodyAnggota"></tbody>
-          </table>
         </div>
+        <div class="anggota-header">
+          <h3>Anggota Kelas</h3>
+          <div class="jumlah-anggota">Jumlah: <span id="countAnggota">0</span></div>
+        </div>
+        <table class="table">
+          <thead><tr><th>NIM</th><th>Nama</th><th>Email</th><th>Role</th><th>Aksi</th></tr></thead>
+          <tbody id="tbodyAnggota"></tbody>
+        </table>
+      </div>
     </section>
 
-
-        <!-- PENGATURAN -->
+    <!-- PENGATURAN -->
     <section id="page-pengaturan" class="page">
       <div class="card small">
         <h3>Pengaturan Iuran & QRIS</h3>
@@ -142,25 +143,24 @@
           <label>Iuran Mingguan (Rp)
             <input id="setIuran" class="input" type="number" min="0" />
           </label>
-          <label>Tanggal Mulai Minggu (opsional)
+          <label>Tanggal Mulai Minggu
             <input id="setStart" class="input" type="date" />
           </label>
         </div>
-        <div class="flex gap" style="margin-top:8px">
+        <div class="flex gap" style="margin-top:12px">
           <button class="btn primary admin-only" id="btnSimpanPengaturan">Simpan</button>
           <button class="btn" id="btnReloadPengaturan">Muat Ulang</button>
         </div>
         <div class="hr"></div>
         <h4>QRIS Kelas</h4>
-        <p class="muted">Scan QR berikut lalu ajukan pembayaran dari tombol “+ QRIS (Ajukan)”.</p>
+        <p class="muted">Scan QR berikut lalu ajukan pembayaran dari tombol "+ QRIS".</p>
         <img src="assets/qris.jpg" alt="QRIS" class="qris" />
       </div>
     </section>
   </main>
 
-  <footer class="footer">© UBP — Kas Kelas IF 24-A</footer>
+  <footer class="footer">© UBP – Kas Kelas IF 24-A</footer>
 
-  <!-- SCRIPT DI AKHIR -->
   <script src="script.js"></script>
 </body>
 </html>
