@@ -140,13 +140,7 @@ body.bg{background:var(--bg);margin:0;font-family:Poppins,system-ui,-apple-syste
     min-width:80px;
     font-size:12px;
   }
-  /* FIXED: Nominal jadi rata kanan dengan flex-direction */
-  .table td.right{
-    text-align:right;
-  }
-  .table td.right::before{
-    text-align:left;
-  }
+  /* Hapus styling khusus untuk .right - biarkan semua sama */
   .table td:last-child{
     flex-direction:column;
     align-items:stretch;
