@@ -53,3 +53,51 @@ body.bg{background:var(--bg);margin:0;font-family:Poppins,system-ui,-apple-syste
   .stats{grid-template-columns:1fr}
   .grid2{grid-template-columns:1fr}
 }
+
+/* ==== Responsif (Mobile Friendly) ==== */
+@media (max-width: 600px) {
+  .toolbar, .group {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .toolbar .input, .toolbar .btn {
+    width: 100%;
+  }
+  .anggota-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .anggota-header h3 {
+    margin-bottom: 5px;
+  }
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .table thead {
+    display: none;
+  }
+  .table tr {
+    display: block;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 10px;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  }
+  .table td {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 8px;
+    font-size: 14px;
+  }
+  .table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #333;
+  }
+}
