@@ -143,7 +143,6 @@ body.bg{background:var(--bg);margin:0;font-family:Poppins,system-ui,-apple-syste
   /* FIXED: Nominal jadi rata kanan dengan flex-direction */
   .table td.right{
     text-align:right;
-    flex-direction:row-reverse;
   }
   .table td.right::before{
     text-align:left;
